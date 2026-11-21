@@ -28,11 +28,39 @@ Each milestone ends with tests and a short note in the write-up.
 - Download the Greece extract, cut a Thessaloniki bounding box (osmium).
 - Buildings: residential apartment buildings (`building=apartments`, possibly
   `residential`) as centroids with id, address, levels where tagged.
+- Findings (2026-11-21, Geofabrik extract of that day, bbox
+  22.85,40.55,23.05,40.70; `osmium export --geometry-types=polygon`, otherwise
+  closed ways come out twice): 113,802 buildings, 88 % only `building=yes`;
+  6,252 `apartments` + 3,835 `residential`. The apartment/residential share
+  per ~1.7 km cell ranges from 2 % to 63 % (mapper activity, not real
+  density), so selecting by type would bias the areas. Floors tagged on ~22 %
+  of apartment/residential buildings, street address on ~64 %.
+- Decision: select by a proxy instead: all buildings with footprint
+  ≥ ~150 m², excluding non-residential tags (industrial, school, church,
+  retail, commercial, office, garage, roof, …), optionally only inside
+  `landuse=residential`. Missing floors are drawn at random; the write-up
+  states the rule.
 - Synthetic attributes with a fixed seed: visit frequency (1–3 per week),
   cleaning duration (from building size/levels), optional allowed days.
 - Cleaners: count left open (the engine computes it), shift length (e.g. 8 h).
+- Spatial layout: real customer bases are uneven, so buildings are sampled as
+  a mixture: 2–3 dense areas of different sizes (e.g. 50 / 30 / 15 % of
+  buildings) plus ~5 % scattered outliers across the city. Number of areas,
+  sizes and outlier share are parameters; a single compact area is kept as a
+  simpler comparison case.
 - Instances: `small` (~100 buildings) for tests and development, `medium`
-  (~300), `full` (1,000 buildings, ~5,000 visits per week).
+  (~300), `full` (1,000 buildings), nested (small ⊂ medium ⊂ full) and drawn
+  from the same mixture.
+- Load: "up to 5,000 recurring visits" is ambiguous (per week, or visit
+  definitions?). The frequency distribution is a parameter; test a moderate
+  load (~2 visits per building per week) and the 5,000-visits-per-week case.
+- Consequences for later milestones: walking between areas is unrealistic
+  (4 km ≈ 50 min), so a cleaner's day stays within one area (cap on a single
+  walk, or no crossing between areas); isolated buildings need explicit
+  handling and are worth showing in the report.
+- Open questions for the client: how cleaners reach the first building and
+  move between areas (walking only, public transport, company transport);
+  what "5,000 recurring visits" means.
 - OSM data is ODbL: credit "© OpenStreetMap contributors" in the report;
   published derived data stays under ODbL.
 
