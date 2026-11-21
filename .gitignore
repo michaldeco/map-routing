@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Large or generated data (OSM extracts, OSRM files, travel-time caches, reports)
+data/raw/
+data/osrm/
+data/cache/
+output/
+
+# IDE settings (JetBrains)
+.idea/

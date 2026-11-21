@@ -1,0 +1,14 @@
+[project]
+name = "map-routing"
+version = "0.1.0"
+description = "Weekly visit scheduling and walking-route optimization for field workers (OR-Tools, OpenStreetMap)"
+readme = "README.md"
+authors = [
+    { name = "michaldeco", email = "michal@michaldeco.com" }
+]
+requires-python = ">=3.14"
+dependencies = []
+
+[build-system]
+requires = ["uv_build>=0.13.7,<0.14.0"]
+build-backend = "uv_build"
