@@ -8,6 +8,8 @@ __pycache__/
 data/raw/
 data/osrm/
 data/cache/
+data/areas/*/*.pbf
+data/areas/*/*.parquet
 output/
 
 # IDE settings (JetBrains)
