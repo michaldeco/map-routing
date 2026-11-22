@@ -106,24 +106,25 @@ part of M1; `providers/` is created now so `Geocoder` sits where they will.
 
 ## Data layout
 
+The whole `data/` folder is gitignored; the README commands rebuild it.
+
 ```
-data/cache/geofabrik/    index-v1.json, downloaded *.osm.pbf (+ .md5)      gitignored
-data/cache/nominatim/    cached geocoding responses                         gitignored
+data/cache/geofabrik/    index-v1.json, downloaded *.osm.pbf (+ .md5)
+data/cache/nominatim/    cached geocoding responses
 data/areas/<slug>/
-  area.json              boundary, source extract, OSM data date, params   committed
-  area.osm.pbf           cut extract (input for OSRM in M2)                 gitignored
-  buildings_raw.parquet  every building, raw tags                           gitignored
-  context.parquet        residential land use polygons, address points      gitignored
-  buildings.parquet      imputed buildings with value sources               gitignored
-  quality.json           tagged vs imputed counts per field and rule        committed
+  area.json              boundary, source extract, OSM data date, params
+  area.osm.pbf           cut extract (input for OSRM in M2)
+  buildings_raw.parquet  every building, raw tags
+  context.parquet        residential land use polygons, address points
+  buildings.parquet      imputed buildings with value sources
+  quality.json           tagged vs imputed counts per field and rule
 data/instances/<slug>-<size>-<seed>/
-  buildings.csv, instance.json                                               gitignored (regenerate)
+  buildings.csv, instance.json
 ```
 
 Move the existing `data/raw/greece-latest.osm.pbf` into `data/cache/geofabrik/`
 (path as Geofabrik names it) so it is not downloaded again; delete the rest of
-`data/raw/` once M1a reproduces it. `.gitignore`: replace `data/raw/` with
-`data/areas/*/*.pbf`, `data/areas/*/*.parquet`; keep `data/cache/`, `data/osrm/`.
+`data/raw/` once M1a reproduces it.
 
 ## Steps (one commit each on `m1-data`)
 
