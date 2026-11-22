@@ -7,7 +7,11 @@ import typer
 
 from map_routing.settings import load_settings
 
-app = typer.Typer(no_args_is_help=True, help="Visit scheduling and routing on OpenStreetMap data.")
+app = typer.Typer(
+    no_args_is_help=True,
+    pretty_exceptions_enable=False,
+    help="Visit scheduling and routing on OpenStreetMap data.",
+)
 area_app = typer.Typer(no_args_is_help=True, help="Define areas and fetch their map data.")
 buildings_app = typer.Typer(no_args_is_help=True, help="Extract and impute buildings.")
 instance_app = typer.Typer(no_args_is_help=True, help="Generate and validate instances.")
@@ -136,7 +140,7 @@ def instance_validate(path: Path) -> None:
     if (area_dir / "area.json").exists():
         bad = outside(instance, Area.load(area_dir).geometry)
         if bad:
-            typer.echo(f"{len(bad)} locations outside the area, e.g. {bad[:5]}", err=True)
+            typer.echo(f"{len(bad)} location(s) outside the area, e.g. {bad[:5]}", err=True)
             raise typer.Exit(1)
     else:
         typer.echo(f"Area {instance.meta.area_slug!r} not defined here; boundary not checked")
@@ -144,3 +148,35 @@ def instance_validate(path: Path) -> None:
         f"OK: {len(instance.locations):,} locations, "
         f"{instance.visits_per_week:,} visits per week"
     )
+
+
+@instance_app.command("generate")
+def instance_generate(
+    slug: str,
+    size: Annotated[str, typer.Option(help="small (100), medium (300) or full (1,000)")] = "small",
+    seed: Annotated[int, typer.Option(help="Random seed; same seed gives nested sizes")] = 1,
+    layout: Annotated[
+        str, typer.Option(help="mixed (dense areas + outliers) or compact")
+    ] = "mixed",
+    load: Annotated[
+        str, typer.Option(help="moderate (~2 visits/week) or high (~4.5)")
+    ] = "moderate",
+) -> None:
+    """Generate a synthetic instance from the area's imputed buildings."""
+    from map_routing.area.model import Area
+    from map_routing.instance.io import write_instance
+    from map_routing.synthetic.generator import SIZES, GeneratorConfig, generate
+
+    if size not in SIZES:
+        raise typer.BadParameter(f"size must be one of {list(SIZES)}")
+    settings = load_settings()
+    area_dir = settings.area_dir(slug)
+    cfg = GeneratorConfig(layout=layout, load=load)
+    instance = generate(area_dir, Area.load(area_dir), size, seed, cfg)
+    out = write_instance(instance, settings.instances_dir / instance.meta.name)
+    counts = instance.meta.parameters["component_counts"]
+    typer.echo(
+        f"{len(instance.locations):,} locations, {instance.visits_per_week:,} visits "
+        f"per week -> {out}"
+    )
+    typer.echo("  " + ", ".join(f"{k}: {v}" for k, v in counts.items()))

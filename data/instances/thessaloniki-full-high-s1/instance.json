@@ -1,0 +1,79 @@
+{
+  "name": "thessaloniki-full-high-s1",
+  "area_slug": "thessaloniki",
+  "area_data_date": "2026-11-20T21:21:21Z",
+  "source": "synthetic",
+  "created": "2026-11-22T19:19:07Z",
+  "seed": 1,
+  "parameters": {
+    "size": "full",
+    "generator": {
+      "layout": "mixed",
+      "load": "high",
+      "n_centres": 3,
+      "component_weights": [
+        0.5,
+        0.3,
+        0.15
+      ],
+      "component_sigma_m": [
+        700.0,
+        550.0,
+        450.0
+      ],
+      "compact_sigma_m": 1200.0,
+      "min_centre_distance_m": 1500.0,
+      "density_radius_m": 500.0,
+      "workdays": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri"
+      ],
+      "forbidden_day_share": 0.1,
+      "base_duration_min": 15.0,
+      "duration_per_floor_min": 3.0,
+      "duration_noise_sd_min": 3.0,
+      "duration_range_min": [
+        15.0,
+        90.0
+      ],
+      "shift_min": 480.0
+    },
+    "centres": [
+      {
+        "lon": 22.9441934,
+        "lat": 40.6518397,
+        "sigma_m": 700.0,
+        "weight": 0.5
+      },
+      {
+        "lon": 22.9811084,
+        "lat": 40.6574851,
+        "sigma_m": 550.0,
+        "weight": 0.3
+      },
+      {
+        "lon": 22.9494252,
+        "lat": 40.6359784,
+        "sigma_m": 450.0,
+        "weight": 0.15
+      }
+    ],
+    "outlier_weight": 0.050000000000000044,
+    "component_counts": {
+      "area1": 500,
+      "area2": 293,
+      "area3": 151,
+      "outlier": 56
+    },
+    "pool_size": 41524
+  },
+  "workforce": {
+    "shift_min": 480.0,
+    "start": "first_visit"
+  },
+  "locations": 1000,
+  "visits_per_week": 4587
+}

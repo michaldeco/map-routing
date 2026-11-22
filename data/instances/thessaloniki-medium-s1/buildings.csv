@@ -1,0 +1,301 @@
+id,osm_id,lat,lon,address,floors,footprint_m2,floors_source,address_source,visits_per_week,duration_min,allowed_days
+b0001,w1137562007,40.6612387,22.9733407,,5.0,63.0,area_distribution,,3,33.0,Mon Tue Wed Fri
+b0002,w972233759,40.6636614,22.9799517,,3.0,335.9,neighbours_1000m,,2,19.0,Mon Tue Wed Fri
+b0003,w974912183,40.6384072,22.9506833,Κασσάνδρου 107,7.0,464.3,osm,nearest_point,2,37.0,Mon Tue Wed Thu Fri
+b0004,w975880687,40.6624938,22.9459744,,2.0,353.4,neighbours_300m,,3,17.0,Mon Wed Thu Fri
+b0005,w976941212,40.6583747,22.982406,,3.0,206.4,neighbours_300m,,3,22.0,Mon Tue Thu Fri
+b0006,w973915265,40.6520181,22.9440318,,4.0,194.7,neighbours_300m,,2,23.0,Mon Tue Wed Thu Fri
+b0007,w932643287,40.6017414,22.9660306,Τύφωνος 2,5.0,266.1,neighbours_300m,osm,2,26.0,Mon Tue Wed Thu Fri
+b0008,w50447285,40.6373292,22.9433259,Ιουστινιανού 18,7.0,135.2,neighbours_300m,osm,2,36.0,Mon Tue Wed Thu Fri
+b0009,w976193701,40.6510959,22.9527232,,3.0,215.5,neighbours_1000m,,2,21.0,Mon Tue Wed Thu Fri
+b0010,w561501112,40.6577199,22.9459733,,4.0,93.1,neighbours_1000m,,3,32.0,Mon Tue Wed Thu Fri
+b0011,w972729583,40.6595112,22.9844776,,3.0,509.3,neighbours_300m,,5,20.0,Mon Tue Wed Thu Fri
+b0012,w975993198,40.6526617,22.9393201,Ανδρέα Παπανδρέου 33,4.0,248.1,neighbours_300m,nearest_point,2,29.0,Mon Tue Wed Thu Fri
+b0013,w561537460,40.6589775,22.947141,Σβορώνου 3,4.0,43.2,osm,osm,2,31.0,Mon Tue Wed Thu Fri
+b0014,w40842844,40.6487062,22.9481553,Δημοκρατίας 11,2.0,160.2,neighbours_1000m,osm,1,21.0,Mon Tue Wed Thu Fri
+b0015,w569975364,40.6416655,22.9435085,Πολυξένης Αντωνίου 9,5.0,324.9,neighbours_300m,osm,2,24.0,Mon Tue Wed Thu Fri
+b0016,w975584648,40.6612594,22.9304951,Εδέσσης 28,4.0,1027.6,osm,nearest_point,1,22.0,Mon Tue Wed Thu Fri
+b0017,w27414167,40.6324601,22.9421882,Μητροπόλεως 41,10.0,315.9,height,osm,3,42.0,Mon Tue Wed Thu Fri
+b0018,w975541026,40.639241,22.943597,Ελευθερίου Βενιζέλου 67,6.0,204.6,neighbours_300m,nearest_point,2,36.0,Mon Tue Wed Thu Fri
+b0019,w973459789,40.654541,22.9423225,,4.0,204.5,neighbours_1000m,,1,27.0,Tue Wed Thu Fri
+b0020,w974017441,40.6512863,22.9435043,,4.0,430.3,neighbours_300m,,1,30.0,Mon Wed Thu Fri
+b0021,w969704954,40.6497127,22.9573854,,2.0,173.6,neighbours_1000m,,3,25.0,Mon Tue Wed Thu Fri
+b0022,w974519219,40.6419901,22.9477576,,2.0,161.2,neighbours_300m,,3,22.0,Mon Tue Wed Thu Fri
+b0023,w972760885,40.65821,22.9832213,,3.0,182.6,neighbours_300m,,2,25.0,Mon Tue Wed Thu Fri
+b0024,w976619633,40.6509183,22.932433,,3.0,265.5,neighbours_300m,,2,21.0,Mon Tue Wed Thu Fri
+b0025,w975966059,40.6531927,22.9371921,Αγίου Γεωργίου 20,3.0,150.6,neighbours_300m,nearest_point,1,24.0,Mon Tue Wed Thu Fri
+b0026,w561501107,40.6578679,22.9458345,,4.0,77.7,neighbours_1000m,,3,28.0,Mon Tue Wed Thu Fri
+b0027,w974586939,40.6402427,22.9393328,Karaoli & Dimitriou ton Kyprion 26,7.0,330.5,neighbours_300m,nearest_point,2,35.0,Mon Tue Wed Thu Fri
+b0028,w974334470,40.6655897,22.9501556,,3.0,340.9,neighbours_1000m,,3,25.0,Mon Tue Wed Thu Fri
+b0029,w1319015730,40.6419688,22.9525809,,2.0,80.4,osm,,2,22.0,Mon Tue Wed Thu Fri
+b0030,w975964396,40.6536851,22.9359348,Μηδείας 6,3.0,146.9,neighbours_1000m,nearest_point,3,15.0,Mon Tue Wed Thu Fri
+b0031,w973512252,40.652944,22.9432392,,4.0,228.2,neighbours_300m,,1,32.0,Mon Tue Wed Thu Fri
+b0032,w975589571,40.6349275,22.9546985,Αγίου Δημητρίου 168,7.0,394.0,neighbours_300m,nearest_point,1,36.0,Mon Tue Wed Thu Fri
+b0033,w974577274,40.6412106,22.9407088,Σούτσου 2,4.0,291.7,neighbours_300m,osm,1,26.0,Mon Tue Wed Thu Fri
+b0034,w972726805,40.6593029,22.9849323,,3.0,276.3,neighbours_300m,,2,24.0,Mon Tue Wed Thu Fri
+b0035,w976193722,40.6522656,22.952731,,3.0,341.4,neighbours_1000m,,2,21.0,Mon Tue Wed Thu Fri
+b0036,w975943566,40.6510845,22.9407118,,4.0,182.1,neighbours_300m,,2,27.0,Mon Tue Wed Thu Fri
+b0037,w758687571,40.6302745,22.9479157,Παύλου Μελά 22,4.0,355.6,osm,osm,1,29.0,Mon Tue Wed Thu Fri
+b0038,w27406290,40.6391723,22.9467136,Αγίου Δημητρίου 81,5.0,159.8,neighbours_300m,nearest_point,2,29.0,Mon Tue Wed Thu Fri
+b0039,w1391583419,40.6615145,22.9336403,Πεσόντων Ηρώων 3,4.0,191.4,neighbours_300m,nearest_point,1,28.0,Mon Tue Wed Thu Fri
+b0040,w975917383,40.6552994,22.9508923,,2.0,152.2,neighbours_1000m,,3,25.0,Mon Tue Wed Thu
+b0041,w52468664,40.6332567,22.9473903,Πρασακάκη 6,8.0,350.7,neighbours_300m,nearest_point,3,44.0,Mon Tue Wed Thu Fri
+b0042,w975924591,40.6542301,22.9410162,,5.0,192.1,neighbours_300m,,3,29.0,Mon Tue Wed Thu Fri
+b0043,w975952552,40.6396544,22.9556103,Μωρέας 35,3.0,535.0,osm,nearest_point,2,25.0,Mon Tue Wed Thu Fri
+b0044,w976659288,40.6471629,22.9386929,5,4.0,147.6,neighbours_300m,osm,1,27.0,Mon Tue Wed Thu Fri
+b0045,w972559192,40.6591599,22.9877806,,2.0,252.3,neighbours_300m,,2,23.0,Mon Tue Wed Thu Fri
+b0046,w975861404,40.6597017,22.9296249,Αμπελοκήπων 32,5.0,127.8,osm,nearest_point,1,27.0,Mon Tue Wed Thu Fri
+b0047,w973901150,40.6647178,22.9807794,,3.0,316.6,neighbours_1000m,,1,26.0,Mon Tue Wed Thu Fri
+b0048,w975582845,40.6361429,22.953967,Οδός Ησαϊα 5,6.0,292.1,neighbours_300m,osm,1,29.0,Mon Tue Wed Thu Fri
+b0049,w41590417,40.6477564,22.9482464,,3.0,154.3,neighbours_1000m,,3,27.0,Mon Tue Wed Thu Fri
+b0050,w971871484,40.657057,22.9506253,,4.0,216.6,neighbours_1000m,,5,25.0,Mon Tue Wed Thu Fri
+b0051,w974966397,40.6388694,22.941846,Ίωνος Δραγούμη 57,7.0,277.7,neighbours_300m,osm,3,37.0,Mon Tue Wed Thu
+b0052,w975983095,40.640021,22.9539924,Θεοτοκοπούλου 22,3.0,179.4,neighbours_300m,nearest_point,5,24.0,Mon Tue Wed Thu Fri
+b0053,w972220744,40.6623844,22.9915225,,2.0,167.6,neighbours_1000m,,2,19.0,Mon Tue Wed Fri
+b0054,w976188629,40.6520263,22.9584343,,3.0,434.8,neighbours_1000m,,2,20.0,Mon Tue Wed Thu Fri
+b0055,w132618911,40.6356445,22.9540676,Αγίου Δημητρίου 151,6.0,296.2,neighbours_300m,osm,3,32.0,Mon Tue Wed Thu Fri
+b0056,w972213717,40.6614837,22.9919497,,2.0,322.4,neighbours_1000m,,1,23.0,Mon Tue Wed Thu Fri
+b0057,w977752513,40.634126,22.9546213,,6.0,212.8,neighbours_300m,,3,33.0,Mon Tue Wed Thu Fri
+b0058,w973456942,40.6602853,22.9870601,,2.0,217.4,neighbours_300m,,2,17.0,Mon Tue Wed Thu Fri
+b0059,w975610051,40.6396535,22.9457194,Αγίου Δημητρίου 71,6.0,190.0,neighbours_300m,osm,2,35.0,Mon Tue Wed Fri
+b0060,w973485434,40.6546082,22.9427629,,4.0,223.8,neighbours_1000m,,1,31.0,Mon Tue Wed Thu Fri
+b0061,w974582791,40.6420066,22.9494199,,3.0,312.8,neighbours_300m,,1,25.0,Mon Tue Wed Thu Fri
+b0062,r13126532,40.6504393,22.9486228,,3.0,1069.3,neighbours_1000m,,3,23.0,Mon Tue Wed Thu Fri
+b0063,w972748049,40.6558944,22.9844261,,2.0,176.7,neighbours_300m,,2,22.0,Mon Tue Wed Thu Fri
+b0064,w973975996,40.6705219,22.8914077,,4.0,185.9,neighbours_1000m,,2,25.0,Mon Tue Wed Thu Fri
+b0065,w975861382,40.6600226,22.9328602,Πλατεία Ρόδων 20,2.0,244.1,neighbours_300m,osm,1,16.0,Mon Tue Wed Thu Fri
+b0066,w975964397,40.653874,22.9363701,Μηδείας 12,3.0,196.9,neighbours_300m,nearest_point,2,22.0,Mon Tue Wed Thu Fri
+b0067,w976312595,40.6582904,22.9423606,Αγνώστου Στρατιώτου 42,3.0,151.5,neighbours_1000m,nearest_point,1,27.0,Mon Tue Wed Thu Fri
+b0068,w978033087,40.6545631,22.990185,,2.0,395.2,neighbours_1000m,,3,20.0,Mon Tue Wed Thu Fri
+b0069,w971609812,40.658119,22.9490515,,4.0,280.5,neighbours_1000m,,2,27.0,Mon Tue Wed Thu Fri
+b0070,w50727549,40.6380151,22.9438065,Σιατίστης 12,7.0,247.7,neighbours_300m,osm,2,38.0,Mon Tue Wed Thu Fri
+b0071,w737588214,40.6426084,22.9445513,Ολυμπιάδος 29,4.0,455.2,neighbours_300m,nearest_point,3,25.0,Mon Tue Wed Thu Fri
+b0072,w971865858,40.6622832,22.9669882,,2.0,274.7,neighbours_1000m,,1,25.0,Mon Tue Wed Thu Fri
+b0073,w975986935,40.6556948,22.9394068,Μπουμπουλίνος 15,3.0,84.2,neighbours_1000m,nearest_point,2,28.0,Mon Tue Wed Thu Fri
+b0074,w972742784,40.6581336,22.9860984,,2.0,255.1,neighbours_300m,,1,21.0,Mon Tue Wed Thu Fri
+b0075,w976920864,40.6592404,22.980858,,3.0,151.0,neighbours_1000m,,2,24.0,Mon Tue Wed Thu Fri
+b0076,w975890501,40.6441496,22.9383207,,4.0,200.3,neighbours_300m,,2,31.0,Mon Tue Wed Thu Fri
+b0077,w962646740,40.6042862,22.9635403,Στρατηγού Γενναδίου 5,5.0,187.4,neighbours_300m,osm,2,38.0,Mon Tue Wed Thu Fri
+b0078,w976280538,40.6481063,22.9314786,,4.0,176.9,neighbours_300m,,2,29.0,Mon Tue Wed Thu Fri
+b0079,w971533548,40.6561789,22.9520045,,2.0,150.6,neighbours_1000m,,3,16.0,Mon Tue Wed Thu Fri
+b0080,w975975702,40.6532056,22.951167,,3.0,194.8,neighbours_1000m,,2,27.0,Mon Tue Wed Thu Fri
+b0081,w975527078,40.6465368,22.9499885,,3.0,166.7,neighbours_1000m,,2,21.0,Mon Tue Wed Thu Fri
+b0082,w972230861,40.6601793,22.9949547,,3.0,393.4,neighbours_1000m,,3,23.0,Mon Tue Wed Thu Fri
+b0083,w973489805,40.6538601,22.9309135,,4.0,173.2,neighbours_300m,,1,26.0,Mon Tue Wed Thu Fri
+b0084,w756654831,40.6367759,22.9477239,Αμύντα 8,6.0,187.3,neighbours_300m,osm,2,37.0,Mon Tue Wed Thu Fri
+b0085,w975865567,40.65821,22.934525,,4.0,90.8,neighbours_300m,,1,27.0,Mon Tue Wed Thu Fri
+b0086,w975867889,40.6493648,22.9412104,,4.0,167.9,neighbours_300m,,2,25.0,Mon Tue Thu Fri
+b0087,w972756110,40.6563952,22.9867112,,2.0,228.7,neighbours_300m,,2,17.0,Mon Tue Wed Thu Fri
+b0088,w974292621,40.6119024,22.9942696,,5.0,236.2,neighbours_1000m,,2,27.0,Tue Wed Thu Fri
+b0089,w969754858,40.6590919,22.9285957,,4.0,168.7,neighbours_300m,,3,29.0,Mon Tue Wed Thu Fri
+b0090,w28070770,40.6303641,22.9434504,Νίκης 31,9.0,345.8,osm,osm,3,43.0,Mon Tue Wed Thu Fri
+b0091,w155575977,40.6466534,22.9499489,,3.0,171.3,neighbours_1000m,,3,22.0,Mon Tue Wed Thu Fri
+b0092,w975907171,40.6403573,22.9424918,Ολύμπου 45,9.0,244.6,osm,osm,2,43.0,Mon Tue Wed Thu Fri
+b0093,w973413310,40.6517974,22.9339707,17,2.0,164.0,neighbours_300m,nearest_point,1,21.0,Mon Tue Wed Thu Fri
+b0094,w976927381,40.6571896,22.981661,,3.0,180.2,neighbours_1000m,,5,26.0,Mon Tue Wed Thu Fri
+b0095,w976551374,40.6475572,22.9528108,,3.0,246.4,neighbours_1000m,,3,20.0,Mon Tue Wed Thu Fri
+b0096,w970277848,40.6460638,22.9417533,,3.0,274.4,neighbours_300m,,2,21.0,Mon Tue Wed Thu Fri
+b0097,w976916990,40.6592479,22.9798444,,3.0,155.1,neighbours_1000m,,2,24.0,Mon Tue Wed Thu Fri
+b0098,w1278111712,40.6501088,22.931484,,4.0,120.8,neighbours_300m,,3,28.0,Mon Tue Wed Thu Fri
+b0099,w759135912,40.6330724,22.9539827,Κωνσταντίνου Μελενίκου 15,6.0,258.4,neighbours_300m,nearest_point,2,34.0,Mon Tue Thu Fri
+b0100,w613115561,40.6571938,22.955676,Φιλελλήνων 20,2.0,71.4,neighbours_1000m,osm,3,21.0,Mon Tue Wed Thu Fri
+b0101,w30407785,40.6466149,22.9477904,Στρατηγού Στέφανου Σαράφη 7,2.0,184.4,neighbours_1000m,osm,1,24.0,Mon Tue Wed Thu Fri
+b0102,w975982444,40.6529278,22.938768,,5.0,223.1,neighbours_300m,,3,32.0,Mon Tue Wed Thu Fri
+b0103,w976916988,40.658989,22.9797273,,3.0,169.1,neighbours_1000m,,2,25.0,Mon Tue Wed Thu Fri
+b0104,w975926318,40.6539889,22.9401695,,4.0,262.4,neighbours_300m,,1,27.0,Mon Tue Wed Thu Fri
+b0105,w972259818,40.6638057,22.9818842,,3.0,157.3,neighbours_1000m,,2,26.0,Mon Tue Wed Thu Fri
+b0106,w975924630,40.6536842,22.9530357,,3.0,242.1,neighbours_1000m,,1,25.0,Mon Tue Wed Thu Fri
+b0107,w973452971,40.6600273,22.9860175,,2.0,157.4,neighbours_300m,,3,24.0,Mon Tue Wed Thu Fri
+b0108,w975968560,40.6502522,22.9271378,,4.0,187.7,neighbours_300m,,3,32.0,Mon Tue Thu Fri
+b0109,w975988480,40.654809,22.9494126,,2.0,641.5,neighbours_1000m,,1,23.0,Mon Tue Wed Thu Fri
+b0110,w971891661,40.6561852,22.9500743,,2.0,355.0,neighbours_1000m,,2,18.0,Tue Wed Thu Fri
+b0111,w972726804,40.6594926,22.9856805,,2.0,487.9,neighbours_300m,,3,22.0,Mon Tue Wed Thu
+b0112,w972569104,40.6550883,22.9848921,,2.0,155.6,neighbours_300m,,5,19.0,Mon Tue Wed Thu Fri
+b0113,w972754594,40.6572928,22.9870738,Παπανικολάου 51,2.0,473.7,osm,nearest_point,2,26.0,Mon Tue Wed Thu Fri
+b0114,w975921849,40.639057,22.9541769,,4.0,364.6,neighbours_300m,,3,24.0,Mon Tue Wed Thu Fri
+b0115,w974316739,40.6654281,22.950506,,3.0,176.1,neighbours_1000m,,2,22.0,Mon Tue Wed Thu Fri
+b0116,w974609336,40.6386701,22.940758,Συγγρού 22,6.0,69.9,neighbours_300m,nearest_point,2,30.0,Mon Tue Wed Thu Fri
+b0117,w975570819,40.6632757,22.9513196,,3.0,268.4,neighbours_1000m,,2,25.0,Mon Tue Wed Thu Fri
+b0118,w976301443,40.6579583,22.9446802,,4.0,164.0,neighbours_300m,,2,32.0,Mon Wed Thu Fri
+b0119,w975576263,40.661704,22.9329592,Πεσόντων Ηρώων 13,4.0,399.6,osm,nearest_point,1,27.0,Mon Tue Wed Thu Fri
+b0120,w972742783,40.6580987,22.9862874,,2.0,229.5,neighbours_300m,,3,15.0,Mon Tue Wed Thu Fri
+b0121,w971871278,40.6616109,22.9671873,,2.0,220.2,neighbours_1000m,,1,17.0,Mon Tue Wed Thu Fri
+b0122,w976546558,40.6494152,22.950809,Αγίου Δημητρίου 25,3.0,209.9,neighbours_1000m,nearest_point,2,23.0,Mon Tue Wed Thu Fri
+b0123,w972199421,40.6617665,22.9888275,,2.0,295.1,neighbours_1000m,,2,20.0,Mon Tue Wed Thu Fri
+b0124,w973452968,40.6600713,22.9865155,,2.0,377.5,neighbours_300m,,3,21.0,Mon Tue Wed Thu Fri
+b0125,w972749026,40.655548,22.9855776,,2.0,431.8,neighbours_300m,,2,17.0,Mon Tue Wed Thu Fri
+b0126,w760002099,40.6302408,22.9474825,Παύλου Μελά 15,8.0,269.7,osm,osm,1,39.0,Mon Tue Wed Thu Fri
+b0127,w976920865,40.6592541,22.9807184,,3.0,162.0,neighbours_1000m,,1,20.0,Mon Tue Wed Thu Fri
+b0128,w975650641,40.6590572,22.9304804,Θράκης 19,7.0,195.4,neighbours_300m,nearest_point,1,34.0,Mon Tue Wed Thu Fri
+b0129,w1026330636,40.6910583,23.00345,Ελευθερίας Λεωφόρος 8,5.0,209.9,area_distribution,nearest_point,2,33.0,Mon Tue Wed Thu Fri
+b0130,w975999943,40.6522385,22.9511221,,3.0,221.5,neighbours_1000m,,2,28.0,Mon Tue Wed Thu Fri
+b0131,w976000837,40.6538541,22.9396807,Μουδανιών 18,6.0,186.9,neighbours_300m,nearest_point,2,32.0,Mon Tue Wed Thu
+b0132,w758679392,40.6315758,22.9453135,Ιωάννη Τσιμισκή 75,8.0,270.9,neighbours_300m,osm,3,43.0,Mon Tue Wed Thu Fri
+b0133,w972570737,40.6554607,22.9865436,,2.0,184.2,neighbours_300m,,3,21.0,Mon Tue Wed Thu Fri
+b0134,w969705922,40.6522412,22.9190574,,4.0,171.7,neighbours_300m,,2,24.0,Mon Wed Thu Fri
+b0135,w36905802,40.6371373,22.9470439,Μητσαίων 5,9.0,120.0,neighbours_300m,osm,2,40.0,Mon Tue Wed Thu Fri
+b0136,w975983140,40.6568698,22.9827648,,3.0,340.3,neighbours_1000m,,2,24.0,Tue Wed Thu Fri
+b0137,w971959273,40.6548629,22.9286648,28ης Οκτωβρίου 81,5.0,111.3,neighbours_300m,nearest_point,1,32.0,Mon Tue Wed Thu Fri
+b0138,w1137577630,40.6600274,22.9728422,,1.0,124.5,area_distribution,,2,24.0,Mon Tue Wed Thu Fri
+b0139,w975545022,40.6451014,22.9509061,,3.0,173.4,neighbours_300m,,2,29.0,Mon Tue Wed Thu Fri
+b0140,w973449471,40.6605595,22.9871354,,2.0,159.5,neighbours_300m,,1,24.0,Mon Tue Wed Thu Fri
+b0141,w976913062,40.659068,22.9818371,Παπανικολάου 54,3.0,207.0,neighbours_300m,nearest_point,1,23.0,Mon Tue Wed Thu Fri
+b0142,w975865590,40.6573552,22.9321199,Διονύσιου Σολωμού 11,5.0,248.5,neighbours_300m,nearest_point,2,33.0,Mon Tue Wed Thu Fri
+b0143,w972209417,40.6622656,22.9799074,,3.0,293.0,neighbours_1000m,,2,25.0,Mon Tue Wed Thu Fri
+b0144,w756639168,40.6369493,22.9512466,Αγίου Δημητρίου 121,5.0,313.7,osm,osm,2,29.0,Mon Tue Wed Thu Fri
+b0145,w971923761,40.6603144,22.9719378,,2.0,167.8,neighbours_1000m,,2,19.0,Mon Wed Thu Fri
+b0146,w27931126,40.6407287,22.9453331,Στέφανου Δραγούμη 12,6.0,325.3,neighbours_300m,osm,5,40.0,Mon Tue Wed Thu Fri
+b0147,w976925583,40.658366,22.9816673,,3.0,160.3,neighbours_300m,,1,21.0,Mon Tue Wed Thu Fri
+b0148,w975529059,40.6462856,22.9506111,,3.0,353.4,neighbours_1000m,,2,24.0,Mon Tue Wed Thu Fri
+b0149,w975870031,40.6500102,22.9435732,,4.0,227.4,neighbours_1000m,,3,28.0,Mon Tue Wed Thu Fri
+b0150,w976616303,40.6537507,22.9523399,,3.0,184.1,neighbours_1000m,,2,22.0,Mon Tue Wed Thu Fri
+b0151,w972212318,40.6617519,22.9815616,,3.0,372.0,neighbours_1000m,,2,26.0,Mon Tue Wed Thu Fri
+b0152,w972762908,40.6561294,22.9825761,,2.0,255.6,neighbours_1000m,,2,19.0,Mon Tue Wed Thu Fri
+b0153,w972733715,40.6562248,22.9862107,,2.0,193.1,neighbours_300m,,3,21.0,Tue Wed Thu Fri
+b0154,w975924704,40.663307,22.9453968,,2.0,160.5,neighbours_300m,,2,20.0,Mon Tue Wed Thu Fri
+b0155,w976263354,40.653759,22.9555646,,3.0,152.6,neighbours_1000m,,2,23.0,Mon Tue Wed Thu Fri
+b0156,w1137577628,40.6602109,22.972913,,6.0,146.7,area_distribution,,3,28.0,Mon Tue Wed Thu Fri
+b0157,w975577991,40.6371318,22.9531235,Κασσάνδρου 137,7.0,483.2,neighbours_300m,osm,2,36.0,Mon Tue Wed Thu Fri
+b0158,w758389025,40.6292729,22.9463693,Χρυσοστόμου Σμύρνης 10,8.0,228.3,neighbours_300m,osm,2,34.0,Mon Tue Wed Thu Fri
+b0159,w972756834,40.6345381,22.951548,Γεώρ. Ιορδανίδη 1,6.0,171.6,neighbours_300m,nearest_point,2,38.0,Mon Tue Wed Thu Fri
+b0160,w976553682,40.6599662,22.942895,,2.0,163.6,neighbours_300m,,2,27.0,Mon Tue Thu Fri
+b0161,w460224049,40.6397966,22.9445105,Αγίου Δημητρίου 66,5.0,190.6,neighbours_300m,nearest_point,2,29.0,Mon Tue Wed Thu Fri
+b0162,w975966065,40.6532982,22.9367379,Αγίου Στεφάνου 40,3.0,294.0,neighbours_300m,nearest_point,1,24.0,Mon Tue Wed Thu Fri
+b0163,w978098138,40.6534552,22.9930995,,2.0,160.9,neighbours_1000m,,2,19.0,Mon Wed Thu Fri
+b0164,w756637995,40.6367302,22.9419713,Ελευθερίου Βενιζέλου 48,8.0,493.9,osm,nearest_point,2,39.0,Mon Tue Wed Thu Fri
+b0165,w973444755,40.6544738,22.9418116,,5.0,153.1,neighbours_300m,,1,33.0,Mon Tue Wed Thu Fri
+b0166,w1238038506,40.6592834,22.9853923,,3.0,103.4,neighbours_300m,,1,25.0,Mon Tue Wed Thu Fri
+b0167,w974921188,40.6386905,22.9493706,Κασσάνδρου 70,6.0,202.1,neighbours_300m,nearest_point,3,30.0,Mon Tue Wed Thu Fri
+b0168,w41768942,40.6491429,22.945513,,4.0,162.6,neighbours_1000m,,1,27.0,Mon Tue Wed Thu Fri
+b0169,w975862796,40.652016,22.9493868,,3.0,238.7,neighbours_1000m,,1,27.0,Mon Tue Wed Thu Fri
+b0170,w975986914,40.6548554,22.9391729,Αγίας Λαύρας 47,6.0,211.0,neighbours_1000m,nearest_point,3,35.0,Mon Tue Wed Thu Fri
+b0171,w972739582,40.6341487,22.9518332,Φιλίππου 95,6.0,239.4,neighbours_300m,nearest_point,2,33.0,Mon Tue Wed Thu Fri
+b0172,w972752772,40.6372176,22.9522856,Κασσάνδρου 110,7.0,149.6,neighbours_300m,nearest_point,2,39.0,Mon Tue Wed Thu Fri
+b0173,w976662962,40.6480324,22.9383243,Αρχαιοτήτων 48,4.0,343.7,neighbours_300m,osm,2,25.0,Mon Tue Wed Thu Fri
+b0174,w973449482,40.6595687,22.9878946,,2.0,171.9,neighbours_300m,,1,20.0,Mon Tue Wed Thu Fri
+b0175,w26544644,40.6467104,22.9490506,Μιχάλη Καραολή 2,2.0,170.9,neighbours_1000m,osm,2,19.0,Mon Tue Wed Thu Fri
+b0176,w976892349,40.6563004,22.9815389,,3.0,184.9,neighbours_1000m,,3,25.0,Mon Tue Wed Thu Fri
+b0177,w1137413589,40.6605544,22.9687564,,2.0,77.1,neighbours_1000m,,3,24.0,Mon Tue Wed Thu Fri
+b0178,w972761177,40.6552108,22.9879397,,2.0,288.9,neighbours_300m,,5,23.0,Mon Tue Wed Thu Fri
+b0179,w975189518,40.6576812,22.9591502,,2.0,287.6,neighbours_1000m,,3,23.0,Mon Tue Wed Thu Fri
+b0180,w972726808,40.658461,22.9856415,,3.0,165.5,neighbours_300m,,3,25.0,Mon Tue Wed Thu Fri
+b0181,w971923759,40.660885,22.9716967,,2.0,238.6,neighbours_1000m,,1,22.0,Mon Tue Wed Thu Fri
+b0182,w756645006,40.6375066,22.9483743,Πελοποννήσου 8,6.0,256.3,osm,osm,2,36.0,Mon Tue Wed Thu Fri
+b0183,w971912569,40.6560247,22.9911982,,2.0,186.9,neighbours_1000m,,1,23.0,Mon Tue Wed Thu Fri
+b0184,w972733725,40.656059,22.9880114,,2.0,152.6,neighbours_300m,,1,19.0,Mon Tue Wed Thu Fri
+b0185,w975993193,40.652904,22.9395861,,4.0,564.7,neighbours_300m,,1,24.0,Mon Tue Wed Thu Fri
+b0186,w1137577674,40.660746,22.9735403,,3.0,61.6,neighbours_1000m,,3,22.0,Mon Tue Wed Thu Fri
+b0187,w561501103,40.6581144,22.9458433,,4.0,103.8,neighbours_1000m,,2,27.0,Mon Tue Wed Thu Fri
+b0188,w973976374,40.6509188,22.9450057,Ανδρέα Παπανδρέου 100,4.0,346.2,neighbours_1000m,nearest_point,1,28.0,Mon Tue Wed Thu Fri
+b0189,w973919089,40.6562652,22.935609,Ζάκα 7,3.0,130.1,neighbours_300m,nearest_point,2,26.0,Mon Tue Wed Thu Fri
+b0190,w976557952,40.646906,22.9525046,,3.0,237.2,neighbours_1000m,,2,20.0,Mon Tue Wed Thu Fri
+b0191,w976185884,40.6537462,22.9573003,,3.0,224.4,neighbours_1000m,,2,24.0,Tue Wed Thu Fri
+b0192,w973923499,40.6563362,22.9388688,Ζάκα 38,3.0,197.1,neighbours_1000m,nearest_point,2,29.0,Mon Tue Wed Thu Fri
+b0193,w976913066,40.6594333,22.9816744,Παπανικολάου 52,3.0,300.0,neighbours_300m,nearest_point,1,25.0,Mon Tue Wed Thu Fri
+b0194,w1137583069,40.6614231,22.9747373,,3.0,85.6,neighbours_1000m,,2,20.0,Mon Tue Wed Thu Fri
+b0195,w972742778,40.6579276,22.9870503,,2.0,231.5,neighbours_300m,,2,23.0,Mon Tue Wed Thu Fri
+b0196,w971891328,40.6572296,22.9888801,Παπανικολάου 67,2.0,229.2,neighbours_300m,nearest_point,1,20.0,Mon Tue Wed Thu Fri
+b0197,w972213743,40.6600557,22.9911422,,2.0,269.8,neighbours_1000m,,2,19.0,Mon Tue Wed Thu Fri
+b0198,w975911066,40.6521553,22.9396339,,5.0,207.8,neighbours_300m,,1,27.0,Mon Tue Wed Thu Fri
+b0199,w974592550,40.6396356,22.9382111,Πτολεμαίων 14,7.0,245.4,neighbours_300m,nearest_point,3,32.0,Mon Tue Wed Thu Fri
+b0200,w975876314,40.662237,22.9437373,,2.0,199.6,neighbours_300m,,2,19.0,Mon Tue Wed Thu Fri
+b0201,w973491368,40.6531731,22.9425842,,4.0,289.1,neighbours_300m,,3,32.0,Mon Tue Wed Thu Fri
+b0202,w972762906,40.6571135,22.9885486,Παπανικολάου 67,2.0,189.7,neighbours_300m,nearest_point,3,19.0,Mon Tue Wed Thu Fri
+b0203,w154790672,40.6382529,22.9439863,Φιλίππου 25,7.0,98.9,neighbours_300m,osm,2,41.0,Mon Tue Wed Thu Fri
+b0204,w975858522,40.6434381,22.9380756,Αγίου Δημητρίου 9,5.0,211.6,osm,osm,3,31.0,Mon Tue Wed Thu Fri
+b0205,w758999104,40.6357832,22.9504494,Μοίραρχου Δ. Κουφίτσα 3,6.0,387.0,osm,nearest_point,3,34.0,Mon Tue Wed Thu Fri
+b0206,w972253941,40.6601745,22.9775783,,3.0,155.4,neighbours_1000m,,1,21.0,Mon Tue Wed Thu Fri
+b0207,w975574995,40.6461296,22.938892,,3.0,301.4,neighbours_300m,,2,24.0,Mon Tue Wed Thu Fri
+b0208,w28094379,40.6369302,22.9431839,Χαλκέων 15,7.0,228.7,osm,osm,1,35.0,Mon Tue Wed Thu Fri
+b0209,w975956053,40.6471209,22.9411496,Παπαναστασίου Αλεξάνδρου 8,3.0,231.0,neighbours_300m,nearest_point,1,27.0,Mon Tue Wed Thu Fri
+b0210,w972454506,40.6445824,22.9532948,Δαβάκη 30,3.0,278.5,neighbours_300m,nearest_point,2,28.0,Mon Tue Wed Thu Fri
+b0211,w975569977,40.6639826,22.9354985,,4.0,155.8,neighbours_300m,,2,27.0,Mon Tue Wed Thu Fri
+b0212,w975865348,40.6523918,22.9492572,Κύπρου 4,2.0,215.9,neighbours_1000m,nearest_point,2,19.0,Mon Tue Wed Thu Fri
+b0213,w35693341,40.6498698,22.9456362,Νικολάου Παρασκευά 49,4.0,459.0,neighbours_1000m,osm,2,28.0,Mon Tue Wed Thu Fri
+b0214,w973938577,40.6572646,22.9409188,,3.0,261.5,neighbours_1000m,,5,23.0,Mon Tue Wed Thu Fri
+b0215,w972259804,40.6625547,22.9796779,,3.0,168.1,neighbours_1000m,,2,24.0,Mon Tue Wed Thu Fri
+b0216,w972795135,40.6620413,22.9889552,,2.0,202.6,neighbours_1000m,,1,18.0,Mon Tue Wed Thu Fri
+b0217,w756637993,40.6364885,22.9416846,Ελευθερίου Βενιζέλου 44,8.0,192.5,osm,osm,1,40.0,Mon Tue Wed Thu Fri
+b0218,w972742780,40.6580526,22.9866174,,2.0,206.4,neighbours_300m,,2,19.0,Mon Tue Wed Thu Fri
+b0219,w973458233,40.662288,22.9849512,,3.0,173.1,neighbours_1000m,,2,28.0,Mon Tue Wed Thu Fri
+b0220,w377593474,40.6335077,22.9404665,Μητροπόλεως 25,10.0,945.3,height,nearest_point,2,46.0,Mon Tue Wed Thu Fri
+b0221,w561501100,40.6582986,22.9460554,,4.0,91.7,neighbours_1000m,,1,24.0,Mon Tue Wed Thu Fri
+b0222,w972742789,40.6582348,22.9849339,,2.0,359.8,neighbours_300m,,2,21.0,Mon Tue Wed Thu Fri
+b0223,w972219803,40.659553,22.9798647,,3.0,250.3,neighbours_1000m,,3,25.0,Mon Tue Wed Thu Fri
+b0224,w975595649,40.6440371,22.9477682,,2.0,153.0,neighbours_300m,,3,19.0,Mon Tue Wed Thu Fri
+b0225,w758999125,40.6357742,22.949286,Δελμούζου 3,8.0,321.6,neighbours_300m,nearest_point,1,38.0,Mon Tue Wed Thu Fri
+b0226,w1137562008,40.6612518,22.9732741,,8.0,69.1,area_distribution,,3,38.0,Mon Tue Wed Thu Fri
+b0227,w975876311,40.6622788,22.9435431,,2.0,223.3,neighbours_300m,,2,20.0,Mon Tue Wed Thu Fri
+b0228,w972754607,40.6559061,22.9871621,,2.0,210.3,neighbours_300m,,3,26.0,Mon Tue Wed Thu Fri
+b0229,w976000842,40.6540498,22.9393465,,6.0,172.8,neighbours_300m,,2,36.0,Mon Tue Wed Thu Fri
+b0230,w969752316,40.6497624,22.9530931,,3.0,642.7,neighbours_1000m,,1,20.0,Mon Tue Wed Thu Fri
+b0231,w974539134,40.6416099,22.9506811,,2.0,496.1,neighbours_300m,,3,19.0,Mon Tue Wed Thu Fri
+b0232,w976268265,40.65356,22.9541892,,3.0,209.2,neighbours_1000m,,2,24.0,Mon Tue Wed Thu Fri
+b0233,w35693274,40.6493271,22.9463494,Νικολάου Παρασκευά 41,4.0,381.7,neighbours_1000m,osm,2,27.0,Mon Tue Wed Thu Fri
+b0234,w27011742,40.6473792,22.9486112,Νικολάου Παρασκευά 3,3.0,261.2,neighbours_1000m,osm,1,18.0,Mon Tue Wed Thu Fri
+b0235,w975960874,40.648771,22.9431339,,4.0,294.0,neighbours_1000m,,2,27.0,Mon Tue Wed Thu Fri
+b0236,w974921189,40.6385592,22.9491672,Κασσάνδρου 70,6.0,374.7,neighbours_300m,nearest_point,2,34.0,Mon Tue Wed Thu Fri
+b0237,w974921660,40.6381646,22.9496307,,7.0,355.6,neighbours_300m,,1,36.0,Mon Tue Wed Fri
+b0238,w972748040,40.6553944,22.986976,,2.0,485.6,neighbours_300m,,2,23.0,Mon Tue Wed Thu
+b0239,w973976377,40.6510304,22.9461886,,3.0,153.4,neighbours_1000m,,3,25.0,Mon Tue Wed Thu Fri
+b0240,w976892338,40.6571392,22.982365,,3.0,203.9,neighbours_1000m,,3,22.0,Mon Tue Wed Thu Fri
+b0241,w971912570,40.6562704,22.9910756,,2.0,313.8,neighbours_1000m,,1,19.0,Mon Tue Wed Thu Fri
+b0242,w970350751,40.6442208,22.9471375,,3.0,231.0,neighbours_300m,,2,20.0,Mon Tue Wed Thu Fri
+b0243,w972199426,40.6600713,22.9885538,,2.0,177.7,neighbours_1000m,,2,24.0,Mon Tue Wed Thu Fri
+b0244,w973512251,40.6528362,22.9430118,,4.0,293.3,neighbours_300m,,2,32.0,Mon Tue Wed Thu Fri
+b0245,w756654842,40.6366263,22.9470189,Φιλίππου 45,3.0,199.6,osm,osm,3,25.0,Mon Tue Wed Fri
+b0246,w974519221,40.6420063,22.9475719,,2.0,272.6,neighbours_300m,,3,18.0,Mon Tue Wed Thu Fri
+b0247,w974919774,40.6377349,22.9502951,,7.0,263.8,neighbours_300m,,1,38.0,Mon Tue Wed Thu Fri
+b0248,w966597733,40.6473932,22.9573892,,2.0,224.3,neighbours_1000m,,3,19.0,Mon Tue Wed Thu Fri
+b0249,w973919077,40.6559054,22.9371799,Αθανασίου Διάκου 23,3.0,322.8,neighbours_1000m,nearest_point,2,26.0,Mon Tue Wed Thu Fri
+b0250,w27385143,40.6453978,22.9472814,,3.0,193.2,neighbours_300m,,3,24.0,Mon Tue Wed Thu Fri
+b0251,w975904209,40.652042,22.9399089,,4.0,152.0,neighbours_300m,,1,26.0,Mon Tue Wed Thu Fri
+b0252,w976564348,40.6495015,22.9314637,,4.0,124.2,neighbours_300m,,2,27.0,Mon Tue Wed Thu Fri
+b0253,w61898355,40.6467995,22.9285393,,4.0,245.6,neighbours_300m,,3,25.0,Mon Tue Wed Thu Fri
+b0254,w972744719,40.6563839,22.9878366,,2.0,223.6,neighbours_300m,,2,18.0,Tue Wed Thu Fri
+b0255,w759135929,40.6323645,22.9529142,Επισκόπου Κίτρους Νικολάου 7,8.0,362.6,neighbours_300m,osm,1,40.0,Mon Tue Wed Thu Fri
+b0256,w974942255,40.6759861,22.9283092,,4.0,130.9,neighbours_1000m,,2,26.0,Mon Tue Wed Thu Fri
+b0257,w972736337,40.657822,22.9830687,,3.0,170.0,neighbours_300m,,2,17.0,Mon Tue Wed Thu Fri
+b0258,w973903704,40.6523461,22.9437892,,4.0,336.4,neighbours_300m,,2,24.0,Mon Tue Wed Thu Fri
+b0259,w976925580,40.6585708,22.9817317,,3.0,160.8,neighbours_300m,,5,28.0,Mon Tue Wed Thu Fri
+b0260,w972557154,40.6584086,22.988465,Μικράς Ασίας 41,2.0,264.9,neighbours_300m,nearest_point,1,23.0,Mon Tue Wed Thu Fri
+b0261,w987595642,40.5831215,23.030839,,3.0,298.1,neighbours_1000m,,2,25.0,Mon Tue Wed Thu Fri
+b0262,w52349891,40.6345123,22.9377691,Ίωνος Δραγούμη 7,4.0,245.2,osm,nearest_point,2,32.0,Mon Tue Wed Thu Fri
+b0263,w972475946,40.6585043,22.9945479,,3.0,222.0,neighbours_1000m,,5,25.0,Mon Tue Wed Thu Fri
+b0264,w971868276,40.6592089,22.991592,,2.0,197.2,neighbours_1000m,,2,26.0,Mon Tue Wed Thu Fri
+b0265,w972195101,40.6446102,22.9415476,Ανδρέου Ζέντση 9,4.0,130.4,neighbours_300m,osm,3,29.0,Mon Tue Wed Thu Fri
+b0266,w27414338,40.6334729,22.9472323,Πρασακάκη 6,6.0,239.0,osm,osm,3,38.0,Mon Tue Wed Thu Fri
+b0267,w971951762,40.655838,22.988836,Δημοκρατίας 53,2.0,442.8,neighbours_300m,nearest_point,3,21.0,Mon Tue Wed Thu Fri
+b0268,w972259803,40.6627028,22.9795087,,3.0,265.5,neighbours_1000m,,3,28.0,Mon Tue Wed Thu Fri
+b0269,w28070705,40.6309067,22.9426252,Νίκης 25,7.0,376.1,osm,osm,2,36.0,Mon Tue Wed Thu Fri
+b0270,w973485418,40.6536906,22.9424421,,4.0,184.5,neighbours_300m,,2,23.0,Mon Tue Wed Thu Fri
+b0271,w1238038503,40.6591368,22.9850392,Ακαδημίας 1,3.0,64.4,osm,osm,2,21.0,Mon Tue Wed Thu Fri
+b0272,w32074449,40.6473927,22.9511489,Λαμπράκη 2,3.0,259.1,neighbours_1000m,osm,2,26.0,Mon Tue Wed Thu Fri
+b0273,w27652393,40.6474698,22.9453614,Μακρή 1,4.0,172.1,neighbours_1000m,osm,3,27.0,Mon Tue Wed Thu Fri
+b0274,w976551397,40.6482924,22.9516354,,3.0,151.5,neighbours_1000m,,3,26.0,Mon Tue Wed Thu Fri
+b0275,w138949858,40.6470973,22.9542738,,3.0,205.7,neighbours_1000m,,1,25.0,Mon Tue Wed Thu Fri
+b0276,w972569101,40.6555667,22.9844526,,2.0,378.1,neighbours_300m,,1,20.0,Mon Tue Wed Thu Fri
+b0277,w561215188,40.6588566,22.9464476,,4.0,89.5,neighbours_300m,,1,25.0,Mon Tue Wed Thu Fri
+b0278,w612735952,40.6629036,22.985789,Ανοίξεως 9,3.0,97.5,neighbours_1000m,osm,2,21.0,Mon Tue Wed Thu Fri
+b0279,w973469757,40.6622415,22.9863794,,3.0,162.6,neighbours_1000m,,2,21.0,Mon Tue Wed Thu Fri
+b0280,w972733719,40.6560625,22.9857038,,2.0,160.7,neighbours_300m,,2,17.0,Mon Tue Wed Thu Fri
+b0281,w59558621,40.633568,22.9519679,Φιλίππου 86,6.0,249.8,neighbours_300m,osm,3,33.0,Mon Tue Wed Thu Fri
+b0282,w973467756,40.6621611,22.9880814,,2.0,219.0,neighbours_1000m,,2,16.0,Mon Tue Wed Thu Fri
+b0283,w973398446,40.651575,22.9322247,,3.0,155.1,neighbours_300m,,2,26.0,Mon Tue Wed Thu Fri
+b0284,w971972911,40.664585,22.9838352,,3.0,157.2,neighbours_1000m,,2,25.0,Mon Tue Wed Thu Fri
+b0285,w27914950,40.649703,22.9375549,,4.0,88.4,neighbours_300m,,1,27.0,Mon Tue Wed Thu
+b0286,w972263644,40.6421724,22.9444107,Ολυμπιάδος 18,5.0,192.2,neighbours_300m,nearest_point,2,30.0,Mon Tue Wed Thu Fri
+b0287,w760037622,40.633173,22.9485881,,9.0,359.8,neighbours_300m,,2,41.0,Mon Tue Wed Thu Fri
+b0288,w758999075,40.6334356,22.950412,Κωνσταντίνου Παλαιολόγου 18,7.0,134.8,neighbours_300m,nearest_point,1,41.0,Mon Tue Wed Thu Fri
+b0289,w975601166,40.642788,22.949008,Πηλέως 2,3.0,119.1,osm,osm,3,25.0,Mon Tue Wed Thu Fri
+b0290,w972212322,40.6617342,22.9820669,,3.0,164.8,neighbours_1000m,,2,22.0,Mon Tue Wed Thu Fri
+b0291,w973464117,40.6619059,22.9881892,,2.0,157.0,neighbours_1000m,,3,20.0,Mon Tue Wed Thu Fri
+b0292,w974609328,40.6385465,22.9396178,Εγνατία 33,4.0,269.3,neighbours_300m,osm,2,31.0,Mon Tue Wed Thu Fri
+b0293,w975600299,40.6604162,22.951245,,4.0,173.4,neighbours_1000m,,1,26.0,Mon Tue Wed Thu Fri
+b0294,w972213750,40.6597613,22.9907772,,2.0,184.4,neighbours_1000m,,1,20.0,Mon Tue Wed Thu Fri
+b0295,w966590593,40.6560685,22.9265481,,5.0,160.2,neighbours_300m,,2,33.0,Mon Tue Wed Thu Fri
+b0296,w1304625338,40.6343726,22.9520238,Αρριανού 20,6.0,116.7,neighbours_300m,osm,3,34.0,Mon Tue Wed Thu Fri
+b0297,w972213761,40.6625056,22.9920569,,2.0,221.8,neighbours_1000m,,3,22.0,Mon Tue Wed Thu Fri
+b0298,w972210972,40.6622942,22.9819674,,3.0,229.2,neighbours_1000m,,2,28.0,Mon Tue Wed Thu Fri
+b0299,w1137561997,40.6609235,22.9721924,,4.0,67.4,area_distribution,,1,25.0,Mon Tue Wed Thu Fri
+b0300,w976616298,40.6536228,22.9505885,,2.0,153.4,neighbours_1000m,,1,23.0,Mon Tue Wed Thu Fri
