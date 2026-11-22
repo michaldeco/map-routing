@@ -80,6 +80,10 @@ def extract_buildings(area: Area, area_dir: Path) -> tuple[Path, Path]:
     seq = _export(area_dir, "buildings", "wr/building", "polygon")
     buildings = add_measures(features_to_gdf(read_geojsonseq(seq)), area)
     seq.unlink()
+    # The cut keeps buildings crossing the boundary whole; a building belongs to the
+    # area when its centroid lies inside the boundary.
+    centroids = gpd.points_from_xy(buildings.lon, buildings.lat)
+    buildings = buildings[area.geometry.covers(centroids)].reset_index(drop=True)
 
     landuse_seq = _export(area_dir, "landuse", "wr/landuse=residential", "polygon")
     landuse = features_to_gdf(read_geojsonseq(landuse_seq))

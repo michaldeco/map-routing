@@ -1,11 +1,11 @@
 {
-  "buildings": 113863,
-  "residential": 41544,
+  "buildings": 113782,
+  "residential": 41524,
   "residential_by_reason": {
-    "nan": 72319,
-    "footprint ok, residential land use": 30457,
+    "nan": 72258,
+    "footprint ok, residential land use": 30438,
     "building=apartments": 6252,
-    "building=residential": 3835,
+    "building=residential": 3834,
     "building=house": 940,
     "building=detached": 40,
     "building=semidetached_house": 10,
@@ -15,10 +15,10 @@
     "building=apartments;yes": 1
   },
   "excluded_by_reason": {
-    "footprint<150": 57605,
-    "nan": 41544,
-    "outside residential land use": 11849,
-    "building=industrial": 600,
+    "footprint<150": 57585,
+    "nan": 41524,
+    "outside residential land use": 11818,
+    "building=industrial": 592,
     "building=school": 309,
     "building=commercial": 248,
     "building=retail": 219,
@@ -26,7 +26,7 @@
     "building=office": 143,
     "building=church": 96,
     "building=military": 84,
-    "building=warehouse": 62,
+    "building=warehouse": 61,
     "amenity=place_of_worship": 60,
     "building=university": 53,
     "footprint>5000": 52,
@@ -58,10 +58,10 @@
     "building=train_station": 8,
     "building=presbytery": 8,
     "amenity=car_wash": 8,
-    "building=monastery": 8,
     "building=theatre": 7,
     "building=toilets": 7,
     "building=storage_tank": 7,
+    "building=monastery": 7,
     "amenity=townhall": 6,
     "amenity=clinic": 6,
     "building=tower": 6,
@@ -130,15 +130,15 @@
   },
   "floors_source (residential)": {
     "neighbours_300m": 17348,
-    "neighbours_1000m": 15714,
-    "area_distribution": 5146,
+    "neighbours_1000m": 15702,
+    "area_distribution": 5138,
     "osm": 3284,
     "height": 52
   },
   "address_source (residential)": {
-    "none": 26218,
+    "none": 26199,
     "osm": 7798,
-    "nearest_point": 7528
+    "nearest_point": 7527
   },
   "notes": {
     "landuse_coverage": 0.742,
