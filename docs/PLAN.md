@@ -29,6 +29,8 @@ Each milestone ends with tests and a short note in the write-up.
 
 ### M1 Data
 
+Detailed implementation plan: [M1_PLAN.md](M1_PLAN.md).
+
 Works for any area covered by OpenStreetMap; Thessaloniki is the first
 example, nothing in the code assumes it. Four steps, each with its own
 command, inputs and outputs, so each can be tested and rerun alone.
