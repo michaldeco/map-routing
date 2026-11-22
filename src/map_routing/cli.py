@@ -116,3 +116,31 @@ def buildings_impute(
         if len(items) > 10:
             rest = sum(n for _, n in items[10:])
             typer.echo(f"  {rest:>8,}  ({len(items) - 10} other reasons, see quality.json)")
+
+
+@instance_app.command("validate")
+def instance_validate(path: Path) -> None:
+    """Check an instance folder against the format (and its area boundary, if defined)."""
+    from pydantic import ValidationError
+
+    from map_routing.area.model import Area
+    from map_routing.instance.io import read_instance
+    from map_routing.instance.schema import outside
+
+    try:
+        instance = read_instance(path)
+    except ValidationError as exc:
+        typer.echo(f"Invalid instance:\n{exc}", err=True)
+        raise typer.Exit(1) from exc
+    area_dir = load_settings().area_dir(instance.meta.area_slug)
+    if (area_dir / "area.json").exists():
+        bad = outside(instance, Area.load(area_dir).geometry)
+        if bad:
+            typer.echo(f"{len(bad)} locations outside the area, e.g. {bad[:5]}", err=True)
+            raise typer.Exit(1)
+    else:
+        typer.echo(f"Area {instance.meta.area_slug!r} not defined here; boundary not checked")
+    typer.echo(
+        f"OK: {len(instance.locations):,} locations, "
+        f"{instance.visits_per_week:,} visits per week"
+    )
