@@ -67,3 +67,21 @@ def area_fetch(
         area, area_dir, settings.cache_dir / "geofabrik", settings.user_agent, refresh=refresh
     )
     typer.echo(f"Extract {area.source_extract.id} (data {area.data_date}) -> {target}")
+
+
+@buildings_app.command("extract")
+def buildings_extract(slug: str) -> None:
+    """Extract every building (raw tags) and context layers from the area's map data."""
+    import geopandas as gpd
+
+    from map_routing.area.model import Area
+    from map_routing.buildings.extract import extract_buildings
+
+    settings = load_settings()
+    area_dir = settings.area_dir(slug)
+    buildings_path, context_path = extract_buildings(Area.load(area_dir), area_dir)
+    buildings = gpd.read_parquet(buildings_path)
+    context = gpd.read_parquet(context_path)
+    typer.echo(f"{len(buildings):,} buildings -> {buildings_path}")
+    for kind, n in context["kind"].value_counts().items():
+        typer.echo(f"{n:,} {kind} -> {context_path}")
