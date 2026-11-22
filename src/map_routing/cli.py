@@ -85,3 +85,34 @@ def buildings_extract(slug: str) -> None:
     typer.echo(f"{len(buildings):,} buildings -> {buildings_path}")
     for kind, n in context["kind"].value_counts().items():
         typer.echo(f"{n:,} {kind} -> {context_path}")
+
+
+@buildings_app.command("impute")
+def buildings_impute(
+    slug: str,
+    config: Annotated[Path | None, typer.Option(help="Imputation config (JSON)")] = None,
+) -> None:
+    """Fill missing values with explicit rules; write buildings.parquet and quality.json."""
+    from map_routing.buildings.impute import load_config, run
+
+    area_dir = load_settings().area_dir(slug)
+    out, q = run(area_dir, load_config(area_dir, config))
+    typer.echo(f"{q['buildings']:,} buildings, {q['residential']:,} residential -> {out}")
+    notes = q["notes"]
+    typer.echo(
+        f"Residential land use covers {notes['landuse_coverage']:.0%} of buildings; "
+        f"used: {notes['landuse_used']}"
+    )
+    for title in (
+        "residential_by_reason",
+        "excluded_by_reason",
+        "floors_source (residential)",
+        "address_source (residential)",
+    ):
+        typer.echo(f"\n{title}:")
+        items = [(k, n) for k, n in q[title].items() if k not in ("None", "nan", "<NA>")]
+        for key, n in items[:10]:
+            typer.echo(f"  {n:>8,}  {key}")
+        if len(items) > 10:
+            rest = sum(n for _, n in items[10:])
+            typer.echo(f"  {rest:>8,}  ({len(items) - 10} other reasons, see quality.json)")

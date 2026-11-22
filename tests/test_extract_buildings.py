@@ -39,3 +39,21 @@ def test_extract_fixture(area_dir):
     c = gpd.read_parquet(context_path)
     assert c.kind.value_counts().to_dict() == {"address": 2, "residential_landuse": 1}
     assert not list(area_dir.glob("*.geojsonseq"))  # temporary files removed
+
+
+def test_extract_then_impute_fixture(area_dir):
+    from map_routing.buildings.impute import run
+    from map_routing.buildings.rules import ImputationConfig
+
+    bbox = "22.94,40.61,22.96,40.63"
+    area = make_area("tiny", "Tiny", AreaDefinition(kind="bbox", value=bbox), parse_bbox(bbox))
+    area.save(area_dir)
+    extract_buildings(area, area_dir)
+    out, q = run(area_dir, ImputationConfig(min_footprint_m2=100))
+    b = gpd.read_parquet(out).set_index("osm_id")
+    assert b.loc["w200", "floors_source"] == "osm" and b.loc["w200", "floors"] == 6
+    assert b.loc["w202", "floors_source"] == "height" and b.loc["w202", "floors"] == 6
+    assert not b.loc["w204", "residential"]  # school
+    assert not b.loc["w205", "residential"]  # building=yes with amenity=place_of_worship
+    assert b.loc["w200", "address"] == "Egnatia 1"
+    assert (area_dir / "quality.json").exists() and q["buildings"] == 9
