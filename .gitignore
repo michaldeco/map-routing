@@ -10,6 +10,7 @@ data/osrm/
 data/cache/
 data/areas/*/*.pbf
 data/areas/*/*.parquet
+data/instances/
 output/
 
 # IDE settings (JetBrains)

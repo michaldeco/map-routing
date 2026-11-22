@@ -111,7 +111,7 @@ command, inputs and outputs, so each can be tested and rerun alone.
 - Load: "up to 5,000 recurring visits" is ambiguous (per week, or visit
   definitions?). Test a moderate load (~2 visits per building per week) and
   the 5,000-visits-per-week case.
-- Small generated instances are committed (derived OSM data, ODbL).
+- Generated instances are not committed (gitignored); regenerate them with `instance generate`.
 
 #### Later: user import (another source of instances)
 

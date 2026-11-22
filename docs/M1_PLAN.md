@@ -117,7 +117,7 @@ data/areas/<slug>/
   buildings.parquet      imputed buildings with value sources               gitignored
   quality.json           tagged vs imputed counts per field and rule        committed
 data/instances/<slug>-<size>-<seed>/
-  buildings.csv, instance.json                                               committed (small, ODbL)
+  buildings.csv, instance.json                                               gitignored (regenerate)
 ```
 
 Move the existing `data/raw/greece-latest.osm.pbf` into `data/cache/geofabrik/`
