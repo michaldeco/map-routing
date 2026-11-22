@@ -1,0 +1,42 @@
+{
+  "slug": "thessaloniki",
+  "name": "Thessaloniki",
+  "definition": {
+    "kind": "bbox",
+    "value": "22.85,40.55,23.05,40.70",
+    "source": null
+  },
+  "boundary": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          23.05,
+          40.55
+        ],
+        [
+          23.05,
+          40.7
+        ],
+        [
+          22.85,
+          40.7
+        ],
+        [
+          22.85,
+          40.55
+        ],
+        [
+          23.05,
+          40.55
+        ]
+      ]
+    ]
+  },
+  "source_extract": {
+    "id": "greece",
+    "name": "Greece",
+    "url": "https://download.geofabrik.de/europe/greece/greece-latest.osm.pbf"
+  },
+  "data_date": "2026-11-20T21:21:21Z"
+}
