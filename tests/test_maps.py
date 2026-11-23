@@ -81,7 +81,7 @@ def test_scenario_map_layers_and_legend():
         "area1 (3)",
         "area2 (3)",
         "outlier (3)",
-        "Dense area centres",
+        "Dense area centres and spread",
         "t-small-s1: 9 locations, 18 visits/week",
         "openstreetmap",
     ):
@@ -124,7 +124,7 @@ def test_buildings_map_residential_only_and_all():
     html = (
         buildings_map(buildings(20), AREA, sample=None, residential_only=True).get_root().render()
     )
-    assert "10 of 10 residential buildings, by reason" in html
+    assert "10 of 10 residential buildings" in html and "why the building counts" in html
     with pytest.raises(ValueError):
         buildings_map(buildings(4), AREA, colour_by="height")
 
@@ -186,7 +186,7 @@ def test_unknown_floors_have_their_own_legend_row():
     b = buildings(10)
     b.loc[:4, "floors"] = np.nan
     page = buildings_map(b, AREA, colour_by="floors", sample=None).get_root().render()
-    assert "unknown (5)" in page and "other (" not in page
+    assert "<b>unknown</b> (5)" in page and "<b>other</b>" not in page
 
 
 def test_many_dense_areas_sorted_numerically_with_distinct_colours():
@@ -242,3 +242,62 @@ def test_cli_all_ignores_sample(tmp_path, monkeypatch):
     result = CliRunner().invoke(app, ["buildings", "map", "t", "--all", "--sample", "0"])
     assert result.exit_code == 0, result.output
     assert (area_dir / "buildings-reason.html").exists()
+
+
+@pytest.mark.parametrize(
+    "colour_by,value,expected",
+    [
+        ("floors-source", "neighbours_300m", "within 300 m"),
+        ("floors-source", "neighbours_1000m", "within 1000 m"),
+        ("floors-source", "area_median", "area's typical value"),
+        ("floors-source", "osm", "tagged in OpenStreetMap"),
+        ("reason", "building=apartments", "names its type: apartments"),
+        ("reason", "amenity=place_of_worship", "used as: place of worship"),
+        ("reason", "footprint<150", "under 150 m²"),
+        ("reason", "footprint>5000", "over 5000 m²"),
+        ("reason", "outside residential land use", "outside residential zones"),
+        ("residential", "excluded", "not a home"),
+        ("floors", "unknown", "no number of floors"),
+        ("reason", "other", "grouped"),
+    ],
+)
+def test_legend_entries_are_explained(colour_by, value, expected):
+    from map_routing.maps import explain
+
+    assert expected in explain(colour_by, value)
+
+
+def test_every_imputation_source_and_reason_has_an_explanation():
+    """Values produced by the imputation rules must not show up unexplained."""
+    from map_routing.maps import explain
+
+    sources = [
+        "osm",
+        "height",
+        "neighbours_300m",
+        "area_median",
+        "area_distribution",
+        "default_median",
+        "default_distribution",
+        "none",
+    ]
+    reasons = [
+        "footprint ok, residential land use",
+        "outside residential land use",
+        "footprint ok",
+        "footprint<150",
+        "footprint>5000",
+        "building=yes",
+        "amenity=school",
+    ]
+    assert all(explain("floors-source", v) for v in sources)
+    assert all(explain("reason", v) for v in reasons)
+
+
+def test_legends_have_subtitle_and_footer():
+    page = buildings_map(buildings(6), AREA, colour_by="floors-source", sample=None)
+    page = page.get_root().render()
+    assert "where the building&#x27;s number of floors comes from" in page
+    assert "Hover for a summary, click for details" in page
+    page = scenario_map(scenario(), AREA).get_root().render()
+    assert "Dot size: visits per week" in page and "picked at random from all" in page

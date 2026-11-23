@@ -81,19 +81,117 @@ def category_colours(categories: Sequence[str], top: int = len(PALETTE)) -> dict
 # edit, and folium inserts popups, tooltips and legends into the page as HTML.
 
 
-def _legend(title: str, items: list[tuple[str, str, int]], note: str = "") -> folium.Element:
+LegendItem = tuple[str, str, int, str]  # label, colour, count, plain-language explanation
+
+
+def _legend(
+    title: str, items: list[LegendItem], subtitle: str = "", note: str = "", footer: str = ""
+) -> folium.Element:
+    """A legend that explains itself: what the colours mean (subtitle), one line of
+    plain language under each entry, and how to use the map (footer)."""
+    small = "font-size:11px;color:#555"
     rows = "".join(
-        f'<div><span style="display:inline-block;width:11px;height:11px;border-radius:50%;'
-        f'background:{colour};margin-right:6px"></span>{html.escape(label)} ({n:,})</div>'
-        for label, colour, n in items
+        f'<div style="margin-top:4px"><span style="display:inline-block;width:11px;'
+        f"height:11px;border-radius:50%;background:{colour};margin-right:6px;"
+        f'vertical-align:-1px"></span><b>{html.escape(label)}</b> ({n:,})'
+        + (f'<div style="{small};margin-left:17px">{html.escape(desc)}</div>' if desc else "")
+        + "</div>"
+        for label, colour, n, desc in items
     )
-    note_html = f'<div style="color:#b00;max-width:320px">{html.escape(note)}</div>' if note else ""
+    parts = [f"<b>{html.escape(title)}</b>"]
+    if subtitle:
+        parts.append(f'<div style="{small}">{html.escape(subtitle)}</div>')
+    parts.append(rows)
+    if note:
+        parts.append(f'<div style="color:#b00;margin-top:6px">{html.escape(note)}</div>')
+    if footer:
+        parts.append(f'<div style="{small};margin-top:6px">{html.escape(footer)}</div>')
     page = (
         '<div style="position:fixed;bottom:48px;left:12px;z-index:9999;background:white;'
         "padding:8px 10px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.3);"
-        f'font:12px/1.5 sans-serif"><b>{html.escape(title)}</b>{rows}{note_html}</div>'
+        f'font:12px/1.5 sans-serif;max-width:360px;max-height:70vh;overflow-y:auto">'
+        f'{"".join(parts)}</div>'
     )
     return folium.Element(page)
+
+
+FOOTER = "Each dot is one building (at its centre). Hover for a summary, click for details."
+
+# What each colouring shows, in plain language (legend subtitle).
+COLOUR_BY_SUBTITLE = {
+    "residential": "Colour: does the building count as residential (a possible customer)?",
+    "reason": "Colour: why the building counts as residential or not.",
+    "floors-source": "Colour: where the building's number of floors comes from.",
+    "floors": "Colour: number of floors, from OpenStreetMap or estimated.",
+}
+
+
+def explain(colour_by: str, value: str) -> str:
+    """One plain-language line for a legend entry."""
+    if value == "other":
+        return "less frequent values, grouped together"
+    if colour_by == "residential":
+        return {
+            "residential": "counts as a home; can appear in scenarios",
+            "excluded": "not a home (other use, too small or too large)",
+        }.get(value, "")
+    if colour_by == "reason":
+        return _explain_reason(value)
+    if colour_by == "floors-source":
+        return _explain_floors_source(value)
+    if colour_by == "floors":
+        return (
+            "no number of floors (only residential buildings get estimates)"
+            if value == "unknown"
+            else ""
+        )
+    return ""
+
+
+def _explain_reason(value: str) -> str:
+    if value.startswith("building="):
+        return f"OpenStreetMap names its type: {value.removeprefix('building=')}"
+    if value.startswith("amenity="):
+        use = value.removeprefix("amenity=").replace("_", " ")
+        return f"type not named, but used as: {use} (not a home)"
+    if m := re.fullmatch(r"footprint<(\d+(?:\.\d+)?)", value):
+        return f"type not named; ground area under {m.group(1)} m² (shed, garage, kiosk)"
+    if m := re.fullmatch(r"footprint>(\d+(?:\.\d+)?)", value):
+        return f"type not named; ground area over {m.group(1)} m² (hall, mall, factory)"
+    return {
+        "footprint ok, residential land use": (
+            "type not named; usual size, inside a residential zone"
+        ),
+        "outside residential land use": (
+            "type not named; usual size, but outside residential zones"
+        ),
+        "footprint ok": (
+            "type not named; usual size (residential zones are mapped too sparsely to use)"
+        ),
+    }.get(value, "")
+
+
+def _explain_floors_source(value: str) -> str:
+    if m := re.fullmatch(r"neighbours_(\d+)m", value):
+        return (
+            "estimated: typical floors of nearby buildings with known floors "
+            f"(within {m.group(1)} m)"
+        )
+    return {
+        "osm": "known: tagged in OpenStreetMap",
+        "height": "estimated from the tagged height (about 3 m per floor)",
+        "area_median": "estimated: no known buildings nearby, so the area's typical value",
+        "area_distribution": (
+            "estimated: no known buildings nearby, so a random value typical for the area"
+        ),
+        "default_median": (
+            "estimated: too few known buildings in the area, so a configured default"
+        ),
+        "default_distribution": (
+            "estimated: too few known buildings in the area, so a random default"
+        ),
+        "none": "no estimate (not a residential building)",
+    }.get(value, "")
 
 
 def _popup(fields: dict[str, object]) -> str:
@@ -134,7 +232,7 @@ def scenario_map(scenario: Scenario, area: Area) -> folium.Map:
     # Centres first, so the buildings are drawn (and receive the mouse) on top.
     centres = scenario.meta.parameters.get("centres", [])
     if centres:
-        layer = folium.FeatureGroup(name="Dense area centres (1σ, 2σ)")
+        layer = folium.FeatureGroup(name="Dense area centres and spread")
         for i, c in enumerate(centres):
             colour = colours.get(f"area{i + 1}", OTHER_COLOUR)
             for k in (1, 2):
@@ -152,7 +250,10 @@ def scenario_map(scenario: Scenario, area: Area) -> folium.Map:
                 ).add_to(layer)
             folium.Marker(
                 [c["lat"], c["lon"]],
-                tooltip=f"area{i + 1}: weight {c['weight']:.0%}, σ = {c['sigma_m']:g} m",
+                tooltip=(
+                    f"area{i + 1}: about {c['weight']:.0%} of buildings, "
+                    f"typical spread {c['sigma_m']:,.0f} m"
+                ),
             ).add_to(layer)
         layer.add_to(m)
 
@@ -188,14 +289,34 @@ def scenario_map(scenario: Scenario, area: Area) -> folium.Map:
         f"{scenario.meta.name}: {len(scenario.locations):,} locations, "
         f"{scenario.visits_per_week:,} visits/week"
     )
-    items = [(n, colours[n], len(groups[n])) for n in names]
+    centres = scenario.meta.parameters.get("centres", [])
+
+    def describe(group: str) -> str:
+        if group == "outlier":
+            return "picked at random from all residential buildings, anywhere in the area"
+        k = _area_number(group)
+        if k <= len(centres):
+            c = centres[k - 1]
+            return (
+                f"picked near its centre (pin), about {c['weight']:.0%} of buildings; "
+                f"inner circle {c['sigma_m']:,.0f} m = typical spread, "
+                f"outer circle {2 * c['sigma_m']:,.0f} m"
+            )
+        return ""
+
+    items = [(n, colours[n], len(groups[n]), describe(n)) for n in names]
     note = (
         "This scenario has no dense-area labels (generated before they were recorded); "
         "regenerate it with `map-routing scenario generate` to colour the dense areas."
         if missing_components(scenario)
         else ""
     )
-    m.get_root().html.add_child(_legend(title, items, note))
+    subtitle = (
+        "Colour: how the generator picked the building. Dot size: visits per week. "
+        "Dense areas have no edge: picks get rarer with distance from the centre, so "
+        "some lie outside the circles."
+    )
+    m.get_root().html.add_child(_legend(title, items, subtitle=subtitle, note=note, footer=FOOTER))
     folium.LayerControl(collapsed=False).add_to(m)
     return m
 
@@ -276,17 +397,27 @@ def buildings_map(
     if colour_by == "floors":  # natural order, not by frequency
         counts = counts.reindex([b for b in FLOOR_BANDS if b in counts.index])
     if colour_by == "floors":  # every band, incl. "unknown", keeps its own row
-        top = [(v, colours[v], int(n)) for v, n in counts.items()]
+        top = [(v, colours[v], int(n), explain(colour_by, v)) for v, n in counts.items()]
     else:
-        top = [(v, colours[v], int(n)) for v, n in counts.items() if colours[v] != OTHER_COLOUR]
+        top = [
+            (v, colours[v], int(n), explain(colour_by, v))
+            for v, n in counts.items()
+            if colours[v] != OTHER_COLOUR
+        ]
         rest = int(counts[[v for v in counts.index if colours[v] == OTHER_COLOUR]].sum())
         if rest:
-            top.append(("other", OTHER_COLOUR, rest))
+            top.append(("other", OTHER_COLOUR, rest, explain(colour_by, "other")))
     what = "residential buildings" if residential_only else "buildings"
     shown_text = f"{len(shown):,} of {total:,} {what}" + (
         " (random sample)" if len(shown) < total else ""
     )
-    m.get_root().html.add_child(_legend(f"{area.name}: {shown_text}, by {colour_by}", top))
+    legend = _legend(
+        f"{area.name}: {shown_text}",
+        top,
+        subtitle=COLOUR_BY_SUBTITLE[colour_by],
+        footer=FOOTER,
+    )
+    m.get_root().html.add_child(legend)
     return m
 
 
