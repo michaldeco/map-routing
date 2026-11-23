@@ -5,6 +5,7 @@ import pytest
 from shapely.geometry import box
 
 from map_routing.area.model import AreaDefinition, make_area
+from map_routing.geo import WGS84
 from map_routing.instance.io import read_instance, write_instance
 from map_routing.instance.schema import outside
 from map_routing.synthetic.generator import SIZES, GeneratorConfig, generate
@@ -33,7 +34,7 @@ def area_dir(tmp_path):
         }
     )
     df.loc[::10, "residential"] = False
-    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(lon, lat), crs=4326)
+    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(lon, lat), crs=WGS84)
     gdf.to_parquet(tmp_path / "buildings.parquet")
     return tmp_path
 

@@ -9,6 +9,7 @@ from shapely.geometry import Point, box
 from map_routing.area.model import AreaDefinition, make_area
 from map_routing.buildings.impute import impute
 from map_routing.buildings.rules import ImputationConfig, parse_number
+from map_routing.geo import WGS84
 
 LON0, LAT0 = 22.95, 40.62
 M_LON = 1 / 84_400  # degrees of longitude per metre at 40.6°N (approx.)
@@ -40,7 +41,7 @@ def building(x_m, y_m, building="yes", footprint=200.0, **tags):
 
 def gdf(items):
     rows, geoms = zip(*items, strict=True)
-    return gpd.GeoDataFrame(pd.DataFrame(list(rows)), geometry=list(geoms), crs=4326)
+    return gpd.GeoDataFrame(pd.DataFrame(list(rows)), geometry=list(geoms), crs=WGS84)
 
 
 def context(landuse_boxes_m=(), addresses=()):
@@ -54,7 +55,7 @@ def context(landuse_boxes_m=(), addresses=()):
         rows.append({"kind": "address", "addr_street": street, "addr_housenumber": number})
         geoms.append(Point(LON0 + x * M_LON, LAT0 + y * M_LAT))
     cols = ["kind", "addr_street", "addr_housenumber"]
-    return gpd.GeoDataFrame(pd.DataFrame(rows, columns=cols), geometry=geoms, crs=4326)
+    return gpd.GeoDataFrame(pd.DataFrame(rows, columns=cols), geometry=geoms, crs=WGS84)
 
 
 @pytest.mark.parametrize(

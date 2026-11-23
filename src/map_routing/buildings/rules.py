@@ -16,6 +16,8 @@ from pydantic import BaseModel
 from pyproj import CRS
 from scipy.spatial import cKDTree
 
+from map_routing.geo import WGS84
+
 
 class ImputationConfig(BaseModel):
     """Defaults that work for a typical European city; override per area."""
@@ -78,12 +80,32 @@ class ImputationConfig(BaseModel):
 
 @dataclass
 class Context:
+    """Everything a rule needs besides the buildings themselves.
+
+    One context is built per imputation run (see `impute.impute`) and passed to every
+    rule in turn, so rules share the same settings, reference data and random numbers
+    without global state. Imputation works on map data, so the same context serves any
+    later use of the rules, e.g. enriching user-imported locations with floors.
+
+    Attributes:
+        config: thresholds and defaults (per area, from `imputation.json`).
+        utm: the area's local metric coordinate system, for distances in metres.
+        landuse: residential land use polygons (OSM `landuse=residential`), in UTM.
+        addresses: OSM address points (`addr:housenumber` on nodes), in UTM.
+        rng: NumPy's seeded random number generator (`np.random.Generator`). Only the
+            last-resort floor fallbacks draw random values, from the area's observed
+            floors or the configured default distribution; seeding it from
+            `config.seed` makes every run reproducible.
+        notes: decisions rules report for the quality summary, e.g. whether land use
+            was mapped well enough to be used.
+    """
+
     config: ImputationConfig
     utm: CRS
-    landuse: gpd.GeoDataFrame  # residential land use polygons, UTM
-    addresses: gpd.GeoDataFrame  # address points, UTM
+    landuse: gpd.GeoDataFrame
+    addresses: gpd.GeoDataFrame
     rng: np.random.Generator
-    notes: dict  # rules record decisions here (e.g. whether land use was used)
+    notes: dict
 
 
 class Rule(Protocol):
@@ -93,11 +115,30 @@ class Rule(Protocol):
 
 
 def _points_utm(buildings: gpd.GeoDataFrame, utm: CRS) -> gpd.GeoSeries:
-    return gpd.GeoSeries(gpd.points_from_xy(buildings.lon, buildings.lat), crs=4326).to_crs(utm)
+    return gpd.GeoSeries(gpd.points_from_xy(buildings.lon, buildings.lat), crs=WGS84).to_crs(utm)
 
 
 class ResidentialRule:
-    """Tagged type first; for untyped buildings, amenity, footprint and land use."""
+    """Decide whether each building is residential, in order of reliability:
+
+    1. Building type: OSM's `building` tag, when it names a type (`apartments`,
+       `house`, `school`, `garage`, ...). Residential types are listed in the config;
+       every other named type counts as non-residential.
+    2. Amenity: OSM's `amenity` tag describes what a place is used for, e.g.
+       `place_of_worship`, `school`, `hospital`. On an untyped building (`building=yes`),
+       amenities from `excluding_amenities` mark it as non-residential. Shops and cafes
+       do not: they are often on the ground floor of apartment blocks.
+    3. Footprint: the building's ground area in m² (`footprint_m2`, computed from its
+       outline). Untyped buildings below `min_footprint_m2` (sheds, garages, kiosks) or
+       above `max_footprint_m2` (halls, malls, factories) are non-residential.
+    4. Land use: OSM's `landuse=residential` polygons mark residential zones. Where
+       they cover enough of the area (`landuse_min_coverage`), an untyped building of
+       plausible size counts as residential only inside such a zone; where they are
+       mapped too sparsely, they are ignored.
+
+    Writes `residential` (bool), `residential_source` ("osm" for tags, "rule" for
+    footprint and land use) and `residential_reason` (e.g. "building=apartments").
+    """
 
     name = "residential"
 
