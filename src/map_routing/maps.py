@@ -11,7 +11,10 @@ http://127.0.0.1 and opens the browser.
 """
 
 import contextlib
+import errno
 import functools
+import html
+import re
 import urllib.parse
 import webbrowser
 from collections.abc import Sequence
@@ -48,7 +51,7 @@ FLOOR_BANDS = {
     "5–6 floors": "#e34a33",
     "7–9 floors": "#b30000",
     "10+ floors": "#4a0000",
-    "unknown": OTHER_COLOUR,
+    "unknown": "#c7c7c7",  # its own light grey, distinct from OTHER_COLOUR
 }
 OUTLIER_COLOUR = "#222222"
 # Above this many points, browsers get slow; `buildings_map` samples by default.
@@ -62,7 +65,7 @@ def _base_map(area: Area) -> folium.Map:
     m.fit_bounds([[miny, minx], [maxy, maxx]])
     folium.GeoJson(
         mapping(area.geometry),
-        name=f"Area: {area.name}",
+        name=f"Area: {html.escape(area.name)}",
         style_function=lambda _: {"color": "#333", "weight": 2, "fill": False, "dashArray": "6"},
     ).add_to(m)
     return m
@@ -74,27 +77,46 @@ def category_colours(categories: Sequence[str], top: int = len(PALETTE)) -> dict
     return {c: PALETTE[i] if i < top else OTHER_COLOUR for i, c in enumerate(counts.index)}
 
 
-def _legend(title: str, items: list[tuple[str, str, int]]) -> folium.Element:
+# All text shown on a map is escaped: values come from OpenStreetMap, which anyone can
+# edit, and folium inserts popups, tooltips and legends into the page as HTML.
+
+
+def _legend(title: str, items: list[tuple[str, str, int]], note: str = "") -> folium.Element:
     rows = "".join(
         f'<div><span style="display:inline-block;width:11px;height:11px;border-radius:50%;'
-        f'background:{colour};margin-right:6px"></span>{label} ({n:,})</div>'
+        f'background:{colour};margin-right:6px"></span>{html.escape(label)} ({n:,})</div>'
         for label, colour, n in items
     )
-    html = (
+    note_html = f'<div style="color:#b00;max-width:320px">{html.escape(note)}</div>' if note else ""
+    page = (
         '<div style="position:fixed;bottom:48px;left:12px;z-index:9999;background:white;'
         "padding:8px 10px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.3);"
-        f'font:12px/1.5 sans-serif"><b>{title}</b>{rows}</div>'
+        f'font:12px/1.5 sans-serif"><b>{html.escape(title)}</b>{rows}{note_html}</div>'
     )
-    return folium.Element(html)
+    return folium.Element(page)
 
 
 def _popup(fields: dict[str, object]) -> str:
     rows = "".join(
-        f"<tr><th style='text-align:left;padding-right:8px'>{k}</th><td>{v}</td></tr>"
+        f"<tr><th style='text-align:left;padding-right:8px'>{html.escape(str(k))}</th>"
+        f"<td>{html.escape(str(v))}</td></tr>"
         for k, v in fields.items()
         if v is not None and not (isinstance(v, float) and np.isnan(v))
     )
     return f"<table style='font:12px sans-serif'>{rows}</table>"
+
+
+def _area_number(group: str) -> int:
+    m = re.fullmatch(r"area(\d+)", group)
+    return int(m.group(1)) if m else 10**9
+
+
+def group_colour(i: int) -> str:
+    """Palette colours first; beyond them, hues spread by the golden angle, so even
+    many groups stay distinguishable instead of repeating."""
+    if i < len(PALETTE):
+        return PALETTE[i]
+    return f"hsl({(i * 137.5) % 360:.0f}, 65%, 45%)"
 
 
 def scenario_map(scenario: Scenario, area: Area) -> folium.Map:
@@ -104,10 +126,9 @@ def scenario_map(scenario: Scenario, area: Area) -> folium.Map:
     groups: dict[str, list] = {}
     for loc in scenario.locations:
         groups.setdefault(loc.component or "location", []).append(loc)
-    names = sorted(groups, key=lambda g: (g == "outlier", g))
+    names = sorted(groups, key=lambda g: (g == "outlier", _area_number(g), g))
     colours = {
-        g: (OUTLIER_COLOUR if g == "outlier" else PALETTE[i % len(PALETTE)])
-        for i, g in enumerate(names)
+        g: (OUTLIER_COLOUR if g == "outlier" else group_colour(i)) for i, g in enumerate(names)
     }
 
     # Centres first, so the buildings are drawn (and receive the mouse) on top.
@@ -136,7 +157,7 @@ def scenario_map(scenario: Scenario, area: Area) -> folium.Map:
         layer.add_to(m)
 
     for name in names:
-        layer = folium.FeatureGroup(name=f"{name} ({len(groups[name]):,})")
+        layer = folium.FeatureGroup(name=html.escape(f"{name} ({len(groups[name]):,})"))
         for loc in groups[name]:
             popup = _popup(
                 {
@@ -159,7 +180,7 @@ def scenario_map(scenario: Scenario, area: Area) -> folium.Map:
                 fill=True,
                 fill_opacity=0.75,
                 popup=folium.Popup(popup, max_width=320),
-                tooltip=f"{loc.id}: {loc.visits_per_week}×/week",
+                tooltip=html.escape(f"{loc.id}: {loc.visits_per_week}×/week"),
             ).add_to(layer)
         layer.add_to(m)
 
@@ -168,9 +189,21 @@ def scenario_map(scenario: Scenario, area: Area) -> folium.Map:
         f"{scenario.visits_per_week:,} visits/week"
     )
     items = [(n, colours[n], len(groups[n])) for n in names]
-    m.get_root().html.add_child(_legend(title, items))
+    note = (
+        "This scenario has no dense-area labels (generated before they were recorded); "
+        "regenerate it with `map-routing scenario generate` to colour the dense areas."
+        if missing_components(scenario)
+        else ""
+    )
+    m.get_root().html.add_child(_legend(title, items, note))
     folium.LayerControl(collapsed=False).add_to(m)
     return m
+
+
+def missing_components(scenario: Scenario) -> bool:
+    """A synthetic scenario (it has dense-area centres) whose locations lack labels."""
+    has_centres = bool(scenario.meta.parameters.get("centres"))
+    return has_centres and all(loc.component is None for loc in scenario.locations)
 
 
 def sample_buildings(
@@ -236,16 +269,19 @@ def buildings_map(
             fill=True,
             fill_opacity=0.8,
             popup=folium.Popup(popup, max_width=320),
-            tooltip=value,
+            tooltip=html.escape(value),
         ).add_to(m)
 
     counts = values.value_counts()
     if colour_by == "floors":  # natural order, not by frequency
         counts = counts.reindex([b for b in FLOOR_BANDS if b in counts.index])
-    top = [(v, colours[v], int(n)) for v, n in counts.items() if colours[v] != OTHER_COLOUR]
-    rest = int(counts[[v for v in counts.index if colours[v] == OTHER_COLOUR]].sum())
-    if rest:
-        top.append(("other", OTHER_COLOUR, rest))
+    if colour_by == "floors":  # every band, incl. "unknown", keeps its own row
+        top = [(v, colours[v], int(n)) for v, n in counts.items()]
+    else:
+        top = [(v, colours[v], int(n)) for v, n in counts.items() if colours[v] != OTHER_COLOUR]
+        rest = int(counts[[v for v in counts.index if colours[v] == OTHER_COLOUR]].sum())
+        if rest:
+            top.append(("other", OTHER_COLOUR, rest))
     what = "residential buildings" if residential_only else "buildings"
     shown_text = f"{len(shown):,} of {total:,} {what}" + (
         " (random sample)" if len(shown) < total else ""
@@ -255,6 +291,7 @@ def buildings_map(
 
 
 def _floor_band(floors: float) -> str:
+    floors = round(floors)  # imputed floors are whole numbers already; be safe for others
     if floors <= 2:
         return "1–2 floors"
     if floors <= 4:
@@ -271,7 +308,13 @@ def make_server(file: Path, port: int = 8765) -> tuple[ThreadingHTTPServer, str]
     file's URL. Only localhost can connect."""
     file = file.resolve()
     handler = functools.partial(_QuietHandler, directory=str(file.parent))
-    server = ThreadingHTTPServer(("127.0.0.1", port), handler)
+    try:
+        server = ThreadingHTTPServer(("127.0.0.1", port), handler)
+    except OSError as exc:
+        if exc.errno != errno.EADDRINUSE:
+            raise
+        # e.g. another `view` is still running: take any free port instead
+        server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
     return server, f"http://127.0.0.1:{server.server_port}/{urllib.parse.quote(file.name)}"
 
 

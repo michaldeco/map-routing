@@ -153,3 +153,92 @@ def test_centre_circles_do_not_block_building_tooltips():
     assert len(circles) == 4 and all('"interactive": false' in c[:600] for c in circles)
     # drawn before the buildings, so buildings are on top
     assert html.index("L.circle(") < html.index("L.circleMarker(")
+
+
+def test_osm_text_is_escaped():
+    """OSM values are user-editable; they must not become HTML on the map."""
+    s = scenario()
+    s.locations[0].address = "<img src=x onerror=alert(1)>"
+    page = scenario_map(s, AREA).get_root().render()
+    assert "<img src=x" not in page and "&lt;img src=x" in page
+    b = buildings(4)
+    b["building"] = "<b>bold</b>"
+    b["residential_reason"] = "building=<script>"
+    page = buildings_map(b, AREA, sample=None).get_root().render()
+    assert "building=&lt;script&gt;" in page and "<b>bold</b>" not in page
+
+
+def test_busy_port_falls_back_to_a_free_one(tmp_path):
+    import socket
+
+    page = tmp_path / "m.html"
+    page.write_text("x")
+    with socket.socket() as busy:
+        busy.bind(("127.0.0.1", 0))
+        busy.listen()
+        taken = busy.getsockname()[1]
+        server, url = make_server(page, port=taken)
+        with server:
+            assert server.server_port != taken and f":{server.server_port}/" in url
+
+
+def test_unknown_floors_have_their_own_legend_row():
+    b = buildings(10)
+    b.loc[:4, "floors"] = np.nan
+    page = buildings_map(b, AREA, colour_by="floors", sample=None).get_root().render()
+    assert "unknown (5)" in page and "other (" not in page
+
+
+def test_many_dense_areas_sorted_numerically_with_distinct_colours():
+    from map_routing.maps import group_colour
+
+    s = scenario()
+    s.locations = [
+        Location(
+            id=f"b{i}",
+            lat=40.62,
+            lon=22.95,
+            visits_per_week=1,
+            duration_min=30,
+            component=f"area{i + 1}",
+        )
+        for i in range(12)
+    ]
+    page = scenario_map(s, AREA).get_root().render()
+    order = [page.index(f"area{k} (1)") for k in (1, 2, 9, 10, 11)]
+    assert order == sorted(order)
+    assert len({group_colour(i) for i in range(12)}) == 12
+
+
+def test_old_scenarios_get_a_note_instead_of_silent_grey():
+    from map_routing.maps import missing_components
+
+    s = scenario()
+    for loc in s.locations:
+        loc.component = None
+    assert missing_components(s)
+    assert "regenerate it" in scenario_map(s, AREA).get_root().render()
+    assert not missing_components(scenario())
+
+
+@pytest.mark.parametrize(
+    "floors,band", [(2.4, "1–2 floors"), (2.6, "3–4 floors"), (9.5, "10+ floors")]
+)
+def test_floor_band_rounds(floors, band):
+    from map_routing.maps import _floor_band
+
+    assert _floor_band(floors) == band
+
+
+def test_cli_all_ignores_sample(tmp_path, monkeypatch):
+    from typer.testing import CliRunner
+
+    from map_routing.cli import app
+
+    monkeypatch.setenv("MAP_ROUTING_DATA_DIR", str(tmp_path))
+    area_dir = tmp_path / "areas" / "t"
+    AREA.save(area_dir)
+    buildings(6).to_parquet(area_dir / "buildings.parquet")
+    result = CliRunner().invoke(app, ["buildings", "map", "t", "--all", "--sample", "0"])
+    assert result.exit_code == 0, result.output
+    assert (area_dir / "buildings-reason.html").exists()

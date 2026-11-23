@@ -197,13 +197,15 @@ def scenario_map_cmd(
 ) -> None:
     """Write an interactive map of a scenario's locations (open it in a browser)."""
     from map_routing.area.model import Area
-    from map_routing.maps import scenario_map
+    from map_routing.maps import missing_components, scenario_map
     from map_routing.scenario.io import read_scenario
 
     scenario = read_scenario(path)
     area = Area.load(load_settings().area_dir(scenario.meta.area_slug))
     target = out or path / "map.html"
     scenario_map(scenario, area).save(target)
+    if missing_components(scenario):
+        typer.echo("Note: no dense-area labels in this scenario; regenerate it to colour them.")
     typer.echo(f"Map of {len(scenario.locations):,} locations -> {target}")
     typer.echo(f"Open it with: map-routing view {target}")
 
@@ -230,7 +232,7 @@ def buildings_map_cmd(
 
     if colour_by not in COLOUR_BY:
         raise typer.BadParameter(f"must be one of {list(COLOUR_BY)}", param_hint="--colour-by")
-    if sample < 1:
+    if not all_buildings and sample < 1:
         raise typer.BadParameter("must be at least 1", param_hint="--sample")
     area_dir = load_settings().area_dir(slug)
     path = area_dir / "buildings.parquet"
