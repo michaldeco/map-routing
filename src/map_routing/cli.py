@@ -182,7 +182,7 @@ def scenario_generate(
     cfg = GeneratorConfig(layout=layout, load=load)
     scenario = generate(area_dir, Area.load(area_dir), size, seed, cfg)
     out = write_scenario(scenario, settings.scenarios_dir / scenario.meta.name)
-    counts = scenario.meta.parameters["component_counts"]
+    counts = scenario.meta.synthetic.component_counts
     typer.echo(
         f"{len(scenario.locations):,} locations, {scenario.visits_per_week:,} visits "
         f"per week -> {out}"

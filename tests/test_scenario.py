@@ -18,7 +18,7 @@ def meta():
     return ScenarioMeta(
         name="t",
         area_slug="t",
-        source="synthetic",
+        source="import",
         created=datetime(2026, 11, 22, tzinfo=UTC),
         seed=1,
     )
@@ -97,3 +97,53 @@ def test_component_round_trip(tmp_path):
     inst = Scenario(meta=meta(), locations=[loc("a", component="area1"), loc("b")])
     write_scenario(inst, tmp_path)
     assert [loc.component for loc in read_scenario(tmp_path).locations] == ["area1", None]
+
+
+def test_synthetic_info_matches_source():
+    from map_routing.scenario.schema import DenseArea, SyntheticInfo
+
+    info = SyntheticInfo(
+        size="small",
+        layout="mixed",
+        load="moderate",
+        dense_areas=[DenseArea(component="area1", lon=22.95, lat=40.62, sigma_m=700, weight=0.5)],
+        outlier_weight=0.5,
+        component_counts={"area1": 1},
+        pool_size=10,
+    )
+    created = datetime(2026, 11, 23, tzinfo=UTC)
+    ScenarioMeta(name="s", area_slug="t", source="synthetic", created=created, synthetic=info)
+    with pytest.raises(ValidationError, match="synthetic"):
+        ScenarioMeta(name="s", area_slug="t", source="synthetic", created=created)
+    with pytest.raises(ValidationError, match="synthetic"):
+        ScenarioMeta(name="s", area_slug="t", source="import", created=created, synthetic=info)
+    assert info.dense_area("area1").sigma_m == 700 and info.dense_area("area9") is None
+
+
+@pytest.mark.parametrize("kw", [{"component": "centre1"}, {"sigma_m": 0}, {"weight": 1.5}])
+def test_invalid_dense_area(kw):
+    from map_routing.scenario.schema import DenseArea
+
+    data = {"component": "area1", "lon": 22.95, "lat": 40.62, "sigma_m": 700, "weight": 0.5}
+    with pytest.raises(ValidationError):
+        DenseArea(**{**data, **kw})
+
+
+def test_synthetic_info_round_trip(tmp_path):
+    """The generator configuration stored with a scenario reproduces the generator."""
+    from map_routing.synthetic.generator import GeneratorConfig
+
+    cfg = GeneratorConfig(load="high")
+    from map_routing.scenario.schema import SyntheticInfo
+
+    info = SyntheticInfo(
+        size="full",
+        layout="mixed",
+        load="high",
+        dense_areas=[],
+        outlier_weight=0.05,
+        component_counts={},
+        pool_size=0,
+        generator=cfg.model_dump(mode="json"),
+    )
+    assert GeneratorConfig.model_validate(info.generator) == cfg

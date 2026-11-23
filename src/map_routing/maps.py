@@ -35,6 +35,7 @@ from map_routing.legends import (
     COLOUR_BY_SUBTITLE,
     MISSING_COMPONENTS_NOTE,
     SCENARIO_SUBTITLE,
+    dense_areas,
     describe_group,
     explain,
     missing_components,
@@ -162,15 +163,15 @@ def scenario_map(scenario: Scenario, area: Area) -> folium.Map:
     }
 
     # Centres first, so the buildings are drawn (and receive the mouse) on top.
-    centres = scenario.meta.parameters.get("centres", [])
+    centres = dense_areas(scenario)
     if centres:
         layer = folium.FeatureGroup(name="Dense area centres and spread")
-        for i, c in enumerate(centres):
-            colour = colours.get(f"area{i + 1}", OTHER_COLOUR)
+        for c in centres:
+            colour = colours.get(c.component, OTHER_COLOUR)
             for k in (1, 2):
                 folium.Circle(
-                    [c["lat"], c["lon"]],
-                    radius=k * c["sigma_m"],
+                    [c.lat, c.lon],
+                    radius=k * c.sigma_m,
                     color=colour,
                     weight=2 if k == 1 else 1,
                     fill=False,
@@ -181,10 +182,10 @@ def scenario_map(scenario: Scenario, area: Area) -> folium.Map:
                     interactive=False,
                 ).add_to(layer)
             folium.Marker(
-                [c["lat"], c["lon"]],
+                [c.lat, c.lon],
                 tooltip=(
-                    f"area{i + 1}: about {c['weight']:.0%} of buildings, "
-                    f"typical spread {c['sigma_m']:,.0f} m"
+                    f"{c.component}: about {c.weight:.0%} of buildings, "
+                    f"typical spread {c.sigma_m:,.0f} m"
                 ),
             ).add_to(layer)
         layer.add_to(m)
@@ -221,8 +222,6 @@ def scenario_map(scenario: Scenario, area: Area) -> folium.Map:
         f"{scenario.meta.name}: {len(scenario.locations):,} locations, "
         f"{scenario.visits_per_week:,} visits/week"
     )
-    centres = scenario.meta.parameters.get("centres", [])
-
     items = [(n, colours[n], len(groups[n]), describe_group(n, centres)) for n in names]
     note = MISSING_COMPONENTS_NOTE if missing_components(scenario) else ""
     subtitle = SCENARIO_SUBTITLE

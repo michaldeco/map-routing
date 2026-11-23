@@ -54,7 +54,7 @@ def test_deterministic_and_nested(area_dir):
 
 def test_mixture_proportions_and_validity(area_dir, tmp_path_factory):
     inst = generate(area_dir, AREA, "full", 1, GeneratorConfig())
-    counts = inst.meta.parameters["component_counts"]
+    counts = inst.meta.synthetic.component_counts
     assert sum(counts.values()) == 1000
     assert abs(counts["area1"] / 1000 - 0.50) < 0.06
     assert abs(counts["outlier"] / 1000 - 0.05) < 0.03
@@ -79,11 +79,13 @@ def test_dense_areas_are_dense(area_dir):
     lon, lat = pool.lon.to_numpy()[order], pool.lat.to_numpy()[order]
 
     def dist_m(c, mask):
-        return np.hypot((lon[mask] - c["lon"]) * 84_400, (lat[mask] - c["lat"]) * 111_000)
+        return np.hypot((lon[mask] - c.lon) * 84_400, (lat[mask] - c.lat) * 111_000)
 
-    centre = info["centres"][0]
+    dense_areas, _ = info
+    centre = dense_areas[0]
+    assert centre.component == "area1"
     area1 = np.median(dist_m(centre, labels == "area1"))
-    assert area1 < 2.5 * centre["sigma_m"]
+    assert area1 < 2.5 * centre.sigma_m
     assert np.median(dist_m(centre, labels == "outlier")) > 1.5 * area1
 
 
@@ -107,7 +109,7 @@ def test_demand_ranges_and_forbidden_days(area_dir):
 
 def test_compact_layout(area_dir):
     inst = generate(area_dir, AREA, "small", 1, GeneratorConfig(layout="compact"))
-    assert inst.meta.parameters["component_counts"] == {"area1": 100}
+    assert inst.meta.synthetic.component_counts == {"area1": 100}
     assert inst.meta.name == "syn-small-compact-s1"
 
 
@@ -149,7 +151,7 @@ def test_inconsistent_component_settings_are_rejected(kw):
 def test_two_centres_when_configured_consistently(area_dir):
     cfg = GeneratorConfig(n_centres=2, component_weights=[0.6, 0.3], component_sigma_m=[700, 500])
     inst = generate(area_dir, AREA, "small", 1, cfg)
-    assert set(inst.meta.parameters["component_counts"]) <= {"area1", "area2", "outlier"}
+    assert set(inst.meta.synthetic.component_counts) <= {"area1", "area2", "outlier"}
 
 
 @pytest.mark.parametrize("option,value", [("--layout", "spiral"), ("--load", "heavy")])

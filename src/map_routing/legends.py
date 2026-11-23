@@ -10,7 +10,7 @@ import re
 import geopandas as gpd
 import pandas as pd
 
-from map_routing.scenario.schema import Scenario
+from map_routing.scenario.schema import DenseArea, Scenario
 
 # Building colourings: option name -> column in buildings.parquet.
 COLOUR_BY = {
@@ -179,25 +179,27 @@ def scenario_groups(scenario: Scenario) -> list[tuple[str, int]]:
     return [(g, counts[g]) for g in order]
 
 
-def describe_group(group: str, centres: list[dict]) -> str:
+def describe_group(group: str, dense_areas: list[DenseArea]) -> str:
     """Plain-language line for a scenario group (dense area or outliers)."""
     if group == "outlier":
         return "picked at random from all residential buildings, anywhere in the area"
-    k = area_number(group)
-    if k <= len(centres):
-        c = centres[k - 1]
-        return (
-            f"picked near its centre (pin), about {c['weight']:.0%} of buildings; "
-            f"inner circle {c['sigma_m']:,.0f} m = typical spread, "
-            f"outer circle {2 * c['sigma_m']:,.0f} m"
-        )
-    return ""
+    d = next((d for d in dense_areas if d.component == group), None)
+    if d is None:
+        return ""
+    return (
+        f"picked near its centre (pin), about {d.weight:.0%} of buildings; "
+        f"inner circle {d.sigma_m:,.0f} m = typical spread, "
+        f"outer circle {2 * d.sigma_m:,.0f} m"
+    )
+
+
+def dense_areas(scenario: Scenario) -> list[DenseArea]:
+    return scenario.meta.synthetic.dense_areas if scenario.meta.synthetic else []
 
 
 def missing_components(scenario: Scenario) -> bool:
     """A synthetic scenario (it has dense-area centres) whose locations lack labels."""
-    has_centres = bool(scenario.meta.parameters.get("centres"))
-    return has_centres and all(loc.component is None for loc in scenario.locations)
+    return bool(dense_areas(scenario)) and all(loc.component is None for loc in scenario.locations)
 
 
 def sample_buildings(
