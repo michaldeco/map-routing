@@ -25,7 +25,15 @@ uv run map-routing buildings impute thessaloniki
 # 3. Generate a synthetic scenario (the engine's input) and validate it
 uv run map-routing scenario generate thessaloniki --size full --seed 1
 uv run map-routing scenario validate data/scenarios/thessaloniki-full-s1
+
+# 4. Check the data on a map (served from http://127.0.0.1, opens the browser)
+uv run map-routing scenario map data/scenarios/thessaloniki-full-s1
+uv run map-routing view data/scenarios/thessaloniki-full-s1/map.html
+uv run map-routing buildings map thessaloniki --colour-by floors --residential-only
 ```
+
+Building maps show a random sample of 5,000 buildings by default (`--sample N`,
+or `--all`); colour them by `residential`, `reason`, `floors-source` or `floors`.
 
 Place names are resolved with Nominatim; set `MAP_ROUTING_USER_AGENT` to
 identify yourself if you use it a lot. Data lives in `./data` (override with

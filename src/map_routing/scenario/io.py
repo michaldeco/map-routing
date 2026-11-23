@@ -32,7 +32,15 @@ def read_scenario(directory: Path) -> Scenario:
     meta.pop("visits_per_week", None)
     # Text columns stay text even when every value looks like a number (e.g. addresses
     # that are only house numbers).
-    text = ["id", "osm_id", "address", "floors_source", "address_source", "allowed_days"]
+    text = [
+        "id",
+        "osm_id",
+        "address",
+        "floors_source",
+        "address_source",
+        "allowed_days",
+        "component",
+    ]
     df = pd.read_csv(directory / "buildings.csv", dtype=dict.fromkeys(text, str))
     records = df.astype(object).where(df.notna(), None).to_dict(orient="records")
     return Scenario(meta=ScenarioMeta.model_validate(meta), locations=records)

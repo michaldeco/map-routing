@@ -43,6 +43,9 @@ class Location(BaseModel):
     visits_per_week: int = Field(ge=1, le=7)
     duration_min: float = Field(ge=5, le=240)
     allowed_days: tuple[str, ...] = WEEKDAYS
+    # Synthetic scenarios only: which dense area (area1, area2, ...) or "outlier" the
+    # location was drawn from. For checking and maps; the engine ignores it.
+    component: str | None = None
 
     @field_validator("allowed_days", mode="before")
     @classmethod

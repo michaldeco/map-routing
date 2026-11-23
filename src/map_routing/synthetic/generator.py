@@ -194,6 +194,7 @@ def generate(area_dir, area: Area, size: str, seed: int, cfg: GeneratorConfig) -
             visits_per_week=int(visits[i]),
             duration_min=float(duration[i]),
             allowed_days=days[i],
+            component=labels[i],
         )
         for i in range(n)
     ]
