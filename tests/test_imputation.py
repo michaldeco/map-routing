@@ -121,9 +121,9 @@ def test_floors_chain():
         "neighbours_300m",
         "height",
         "neighbours_1000m",
-        "default",
+        "default_median",
     ]
-    assert tail.floors.tolist()[:3] == [6.0, 5.0, 6.0]
+    assert tail.floors.tolist() == [6.0, 5.0, 6.0, 2.0]  # default median of 1-4 (.2/.3/.3/.2)
     assert out.iloc[:5].floors_source.eq("osm").all()
 
 
@@ -132,7 +132,12 @@ def test_area_distribution_fallback_is_seeded():
         building(i * 30, 0, "apartments", building_levels=str(3 + i % 4)) for i in range(40)
     ]
     far = [building(20_000 + i * 10, 0, "apartments") for i in range(5)]
-    cfg = ImputationConfig(landuse_mode="ignore", min_observed_for_area_distribution=30, seed=7)
+    cfg = ImputationConfig(
+        landuse_mode="ignore",
+        min_observed_for_area_distribution=30,
+        seed=7,
+        floor_fallback="random",
+    )
     a, _ = impute(gdf(observed + far), context(), AREA, cfg)
     b, _ = impute(gdf(observed + far), context(), AREA, cfg)
     assert a.iloc[40:].floors_source.eq("area_distribution").all()
@@ -159,3 +164,30 @@ def test_address_own_then_nearest():
     out, _ = impute(b, ctx, AREA, ImputationConfig(landuse_mode="ignore"))
     assert out.address.tolist() == ["Egnatia 1", "Tsimiski 5", None]
     assert out.address_source.tolist() == ["osm", "nearest_point", None]
+
+
+def test_area_median_fallback_is_default():
+    """Real data gets one fixed, explainable value, not a random draw."""
+    floors = [3 + i % 4 for i in range(40)]
+    observed = [
+        building(i * 30, 0, "apartments", building_levels=str(f)) for i, f in enumerate(floors)
+    ]
+    far = [building(20_000 + i * 10, 0, "apartments") for i in range(5)]
+    cfg = ImputationConfig(landuse_mode="ignore", min_observed_for_area_distribution=30)
+    out, _ = impute(gdf(observed + far), context(), AREA, cfg)
+    assert out.iloc[40:].floors_source.eq("area_median").all()
+    assert out.iloc[40:].floors.eq(np.round(np.median(floors))).all()
+
+
+@pytest.mark.parametrize(
+    "values,weights,expected",
+    [
+        ([1, 2, 3, 4], [0.2, 0.3, 0.3, 0.2], 2.0),
+        ([5, 1, 3], [1, 1, 1], 3.0),
+        ([1, 9], [0.1, 0.9], 9.0),
+    ],
+)
+def test_weighted_median(values, weights, expected):
+    from map_routing.buildings.rules import weighted_median
+
+    assert weighted_median(np.array(values, float), np.array(weights, float)) == expected

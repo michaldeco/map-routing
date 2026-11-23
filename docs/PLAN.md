@@ -62,7 +62,10 @@ command, inputs and outputs, so each can be tested and rerun alone.
     are config values with defaults.
   - Floors: `building:levels`; else `height` ÷ ~3 m; else the median of
     tagged buildings nearby (adapts to each city: tall blocks in a centre,
-    low houses in a village); else a default distribution.
+    low houses in a village, within 300 m, then 1,000 m); else the area's
+    median floors; else the median of a configured default. Random draws
+    instead of medians are opt-in (`floor_fallback: random`) and meant only
+    for synthetic data, never for real client data.
   - Address: the nearest address point if any (display only).
 - Data-quality summary per run: counts tagged vs imputed, by rule; part of
   the write-up and a quick check for a new area.

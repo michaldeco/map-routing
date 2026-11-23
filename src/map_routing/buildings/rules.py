@@ -74,6 +74,12 @@ class ImputationConfig(BaseModel):
     # Below this many observed buildings, the area's own distribution is not trusted.
     min_observed_for_area_distribution: int = 30
     default_floors: dict[int, float] = {1: 0.2, 2: 0.3, 3: 0.3, 4: 0.2}
+    # Last-resort floor fallbacks (no tags, no observed neighbours):
+    # "median": one fixed, explainable value (the area's median, else the default
+    #   distribution's median). Right for real data, e.g. a client's buildings.
+    # "random": a seeded draw from the same distributions; keeps the realistic spread
+    #   of floors, which only suits synthetic data. Opt in per area.
+    floor_fallback: Literal["median", "random"] = "median"
     address_max_distance_m: float = 30.0
     seed: int = 0
 
@@ -92,10 +98,11 @@ class Context:
         utm: the area's local metric coordinate system, for distances in metres.
         landuse: residential land use polygons (OSM `landuse=residential`), in UTM.
         addresses: OSM address points (`addr:housenumber` on nodes), in UTM.
-        rng: NumPy's seeded random number generator (`np.random.Generator`). Only the
-            last-resort floor fallbacks draw random values, from the area's observed
-            floors or the configured default distribution; seeding it from
-            `config.seed` makes every run reproducible.
+        rng: NumPy's seeded random number generator (`np.random.Generator`). Used
+            only when `config.floor_fallback` is "random" (synthetic data): the
+            last-resort floor fallbacks then draw from the area's observed floors or
+            the configured default distribution. Seeding it from `config.seed` makes
+            such runs reproducible. With the default "median", no rule draws randomly.
         notes: decisions rules report for the quality summary, e.g. whether land use
             was mapped well enough to be used.
     """
@@ -210,8 +217,9 @@ def parse_number(value: object) -> float | None:
 
 class FloorsRule:
     """building:levels, then height, then the median of nearby observed buildings
-    (several radii), then the area's observed distribution, then a configured default.
-    Only residential buildings get imputed floors."""
+    (several radii), then the area's observed floors, then a configured default.
+    The last two give a median (default) or a seeded random draw, see
+    `ImputationConfig.floor_fallback`. Only residential buildings get imputed floors."""
 
     name = "floors"
 
@@ -249,20 +257,37 @@ class FloorsRule:
                 b.loc[target, "floors"] = np.median(values[idx[enough]], axis=1).round()
                 b.loc[target, "floors_source"] = f"neighbours_{radius:g}m"
 
+        # The area's own observed floors: adapts to tall city centres and villages.
         still = b.floors.isna() & b.residential
         if still.any() and len(values) >= cfg.min_observed_for_area_distribution:
-            # The area's own observed distribution: adapts to tall city centres and villages.
-            b.loc[still, "floors"] = ctx.rng.choice(values, size=int(still.sum()))
-            b.loc[still, "floors_source"] = "area_distribution"
+            n = int(still.sum())
+            if cfg.floor_fallback == "median":
+                b.loc[still, "floors"] = float(np.round(np.median(values)))
+                b.loc[still, "floors_source"] = "area_median"
+            else:
+                b.loc[still, "floors"] = ctx.rng.choice(values, size=n)
+                b.loc[still, "floors_source"] = "area_distribution"
+
+        # The configured default, when the area has too few observed buildings.
         still = b.floors.isna() & b.residential
         if still.any():
-            options = np.array(list(cfg.default_floors))
+            options = np.array(list(cfg.default_floors), dtype=float)
             probs = np.array(list(cfg.default_floors.values()), dtype=float)
-            b.loc[still, "floors"] = ctx.rng.choice(
-                options, size=int(still.sum()), p=probs / probs.sum()
-            )
-            b.loc[still, "floors_source"] = "default"
+            probs = probs / probs.sum()
+            if cfg.floor_fallback == "median":
+                b.loc[still, "floors"] = weighted_median(options, probs)
+                b.loc[still, "floors_source"] = "default_median"
+            else:
+                b.loc[still, "floors"] = ctx.rng.choice(options, size=int(still.sum()), p=probs)
+                b.loc[still, "floors_source"] = "default_distribution"
         return b
+
+
+def weighted_median(values: np.ndarray, weights: np.ndarray) -> float:
+    """Smallest value at which the cumulative weight reaches half."""
+    order = np.argsort(values)
+    cumulative = np.cumsum(weights[order]) / weights.sum()
+    return float(values[order][np.searchsorted(cumulative, 0.5)])
 
 
 def _xy(b: gpd.GeoDataFrame, utm: CRS) -> tuple[np.ndarray, np.ndarray]:

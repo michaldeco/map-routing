@@ -173,7 +173,10 @@ Move the existing `data/raw/greece-latest.osm.pbf` into `data/cache/geofabrik/`
      join) -> `rule:footprint_landuse`.
   2. Floors: `building:levels` -> `osm`; `height`/3 m -> `height`; median of
      tagged buildings within radius R (default 300 m, at least k=5, KD-tree in
-     UTM) -> `neighbours`; else default distribution (seeded) -> `default`.
+     UTM) -> `neighbours_300m`, then 1,000 m -> `neighbours_1000m`; else the
+     area's median -> `area_median`; else the default's median -> `default_median`.
+     (Implemented after review: medians by default; seeded random draws only
+     with `floor_fallback: random`, for synthetic data.)
   3. Address: nearest address point within 30 m -> `nearest_point`, else empty.
 - `quality.json` + a printed summary table: counts per field and source.
 - Rules are small classes with a common interface (`name`, `apply(gdf, context)`),
