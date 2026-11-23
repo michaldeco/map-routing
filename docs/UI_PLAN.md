@@ -49,6 +49,14 @@ Decisions:
   switching views needs no regeneration.
 - **Colours live in the frontend**; the API returns categories, counts and
   explanations, in display order. Presentation stays in one place.
+- **API models are a separate layer** (`map_routing/api/models.py`): the API
+  depends on the core, never the reverse, and the frontend contract changes only
+  when these models do. Naming rule, enforced by a test: never reuse a core
+  model's name (`Area`, `Scenario`, `Location`, `DenseArea`, ...); resources
+  are `...Summary` / `...Detail`, GeoJSON shapes `...Feature` / `...Properties`
+  / `...Collection`.
+- **Typed core metadata**: synthetic scenarios store `SyntheticInfo` (size,
+  layout, load, `DenseArea` list, counts) instead of an untyped dictionary.
 - **Points now, footprints later**: buildings are served as centroids; an
   optional footprint geometry can be added when a view needs it.
 - **Security**: bound to 127.0.0.1, read-only, every slug and scenario name

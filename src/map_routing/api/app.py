@@ -16,20 +16,21 @@ from map_routing.api.models import (
     AreaDetail,
     AreaSummary,
     Bounds,
+    BuildingCollection,
     BuildingFeature,
     BuildingProperties,
-    BuildingsResponse,
-    Centre,
     ColourBy,
+    DenseAreaDetail,
     Legend,
     LegendItem,
     LocationFeature,
     LocationProperties,
     PointGeometry,
-    ScenarioResponse,
+    ScenarioDetail,
     ScenarioSummary,
 )
 from map_routing.area.model import Area
+from map_routing.scenario.schema import ScenarioMeta
 from map_routing.settings import Settings, load_settings
 
 MAX_SAMPLE = 50_000  # more points than this make the browser slow; use `all` deliberately
@@ -76,7 +77,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         all: Annotated[
             bool, Query(description="Every building, no sampling")
         ] = False,  # noqa: A002
-    ) -> BuildingsResponse:
+    ) -> BuildingCollection:
         """Imputed buildings as points, each with its legend category for `colour_by`."""
         area = store.area(slug)
         b = store.buildings(slug)
@@ -113,7 +114,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             ],
             footer=legends.BUILDINGS_FOOTER,
         )
-        return BuildingsResponse(
+        return BuildingCollection(
             features=features,
             colour_by=colour_by,
             total=total,
@@ -127,16 +128,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def list_scenarios(
         store: Store, area: Annotated[str | None, Query(description="Only this area")] = None
     ) -> list[ScenarioSummary]:
-        summaries = [
-            _scenario_summary(d.name, store.scenario_meta(d)) for d in store.scenario_dirs()
-        ]
+        summaries = [_listed_summary(store.scenario_meta(d)) for d in store.scenario_dirs()]
         return [s for s in summaries if area is None or s.area_slug == area]
 
     @app.get("/api/scenarios/{name}")
-    def get_scenario(name: str, store: Store) -> ScenarioResponse:
+    def get_scenario(name: str, store: Store) -> ScenarioDetail:
         """A scenario's locations as points, with its dense-area centres and legend."""
         scenario = store.scenario(name)
-        centres = scenario.meta.parameters.get("centres", [])
+        dense_areas = legends.dense_areas(scenario)
         groups = legends.scenario_groups(scenario)
         features = [
             LocationFeature(
@@ -156,9 +155,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             )
             for loc in scenario.locations
         ]
-        meta = scenario.meta.model_dump(mode="json")
-        meta["locations"] = len(scenario.locations)
-        meta["visits_per_week"] = scenario.visits_per_week
         legend = Legend(
             title=(
                 f"{scenario.meta.name}: {len(scenario.locations):,} locations, "
@@ -166,24 +162,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             ),
             subtitle=legends.SCENARIO_SUBTITLE,
             items=[
-                LegendItem(value=g, count=n, description=legends.describe_group(g, centres))
+                LegendItem(value=g, count=n, description=legends.describe_group(g, dense_areas))
                 for g, n in groups
             ],
             footer=legends.SCENARIO_FOOTER,
             note=legends.MISSING_COMPONENTS_NOTE if legends.missing_components(scenario) else "",
         )
-        return ScenarioResponse(
-            summary=_scenario_summary(name, meta),
+        return ScenarioDetail(
+            summary=_scenario_summary(
+                scenario.meta, len(scenario.locations), scenario.visits_per_week
+            ),
             features=features,
-            centres=[
-                Centre(
-                    group=f"area{i + 1}",
-                    lon=c["lon"],
-                    lat=c["lat"],
-                    sigma_m=c["sigma_m"],
-                    weight=c["weight"],
+            dense_areas=[
+                DenseAreaDetail(
+                    group=d.component, lon=d.lon, lat=d.lat, sigma_m=d.sigma_m, weight=d.weight
                 )
-                for i, c in enumerate(centres)
+                for d in dense_areas
             ],
             legend=legend,
         )
@@ -207,21 +201,27 @@ def _area_summary(store: DataStore, area: Area) -> AreaSummary:
     )
 
 
-def _scenario_summary(name: str, meta: dict) -> ScenarioSummary:
-    params = meta.get("parameters", {})
-    generator = params.get("generator", {})
+def _scenario_summary(meta: ScenarioMeta, locations: int, visits: int) -> ScenarioSummary:
+    synthetic = meta.synthetic
     return ScenarioSummary(
-        name=name,
-        area_slug=meta["area_slug"],
-        source=meta["source"],
-        created=meta["created"],
-        seed=meta.get("seed"),
-        size=params.get("size"),
-        layout=generator.get("layout"),
-        load=generator.get("load"),
-        locations=meta.get("locations", 0),
-        visits_per_week=meta.get("visits_per_week", 0),
+        name=meta.name,
+        area_slug=meta.area_slug,
+        source=meta.source,
+        created=meta.created,
+        seed=meta.seed,
+        size=synthetic.size if synthetic else None,
+        layout=synthetic.layout if synthetic else None,
+        load=synthetic.load if synthetic else None,
+        locations=locations,
+        visits_per_week=visits,
     )
+
+
+def _listed_summary(raw: dict) -> ScenarioSummary:
+    """Summary from scenario.json alone (fast listing, no CSV); the file also stores
+    the number of locations and visits."""
+    meta = ScenarioMeta.model_validate(raw)
+    return _scenario_summary(meta, raw.get("locations", 0), raw.get("visits_per_week", 0))
 
 
 def _text(value: object) -> str | None:

@@ -181,7 +181,8 @@ def test_scenarios(client):
 
     data = client.get("/api/scenarios/testville-small-s1").json()
     assert data["type"] == "FeatureCollection" and len(data["features"]) == 100
-    assert [c["group"] for c in data["centres"]] == ["area1", "area2", "area3"]
+    assert [d["group"] for d in data["dense_areas"]] == ["area1", "area2", "area3"]
+    assert data["summary"]["size"] == "small" and data["summary"]["load"] == "moderate"
     groups = [i["value"] for i in data["legend"]["items"]]
     assert groups[:3] == ["area1", "area2", "area3"] and groups[-1] == "outlier"
     assert all(i["description"] for i in data["legend"]["items"])
@@ -208,5 +209,31 @@ def test_buildings_cache_reloads_when_file_changes(tmp_path):
 
 def test_openapi_describes_the_models(client):
     schema = client.get("/openapi.json").json()
-    for name in ("BuildingsResponse", "ScenarioResponse", "Legend", "AreaDetail"):
+    for name in ("BuildingCollection", "ScenarioDetail", "DenseAreaDetail", "Legend", "AreaDetail"):
         assert name in schema["components"]["schemas"]
+
+
+def test_api_models_never_reuse_core_names():
+    """Naming rule: API models are a separate layer and must not shadow core models."""
+    import inspect
+
+    from pydantic import BaseModel
+
+    import map_routing.api.models as api
+    import map_routing.area.model as area
+    import map_routing.buildings.rules as rules
+    import map_routing.scenario.schema as schema
+    import map_routing.synthetic.generator as generator
+
+    def models(module):
+        return {
+            name
+            for name, obj in vars(module).items()
+            if inspect.isclass(obj)
+            and issubclass(obj, BaseModel)
+            and obj.__module__ == module.__name__
+        }
+
+    core = set().union(*(models(m) for m in (area, rules, schema, generator)))
+    assert {"Area", "Scenario", "Location", "DenseArea"} <= core
+    assert models(api) and not (models(api) & core)

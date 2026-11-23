@@ -1,6 +1,14 @@
 """API response models. They define the JSON the web app receives; the frontend's
 TypeScript types are generated from the OpenAPI description built from them.
 
+They are a separate layer from the core models (Area, Scenario, Location,
+DenseArea, ...): the API depends on the core, never the other way round, and the
+contract with the frontend changes only when these models change.
+
+Naming rule (enforced by a test): never reuse a core model's name. Resources are
+`...Summary` (list entries) or `...Detail` (one resource); GeoJSON shapes are
+`...Feature`, `...Properties`, `...Collection`; API-only concepts keep their names.
+
 Spatial data is GeoJSON (RFC 7946): longitude/latitude in WGS84 degrees.
 """
 
@@ -68,7 +76,7 @@ class BuildingFeature(BaseModel):
     properties: BuildingProperties
 
 
-class BuildingsResponse(BaseModel):
+class BuildingCollection(BaseModel):
     type: Literal["FeatureCollection"] = "FeatureCollection"
     features: list[BuildingFeature]
     colour_by: ColourBy
@@ -92,8 +100,8 @@ class ScenarioSummary(BaseModel):
     visits_per_week: int
 
 
-class Centre(BaseModel):
-    group: str = Field(description="Dense area this centre belongs to, e.g. area1")
+class DenseAreaDetail(BaseModel):
+    group: str = Field(description="Dense area, e.g. area1 (matches the locations' group)")
     lon: float
     lat: float
     sigma_m: float = Field(description="Typical spread in metres")
@@ -119,9 +127,9 @@ class LocationFeature(BaseModel):
     properties: LocationProperties
 
 
-class ScenarioResponse(BaseModel):
+class ScenarioDetail(BaseModel):
     type: Literal["FeatureCollection"] = "FeatureCollection"
     summary: ScenarioSummary
     features: list[LocationFeature]
-    centres: list[Centre]
+    dense_areas: list[DenseAreaDetail]
     legend: Legend
