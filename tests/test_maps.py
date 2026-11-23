@@ -145,3 +145,11 @@ def test_floor_bands_in_natural_order():
     html = buildings_map(buildings(20), AREA, colour_by="floors", sample=None).get_root().render()
     positions = [html.index(band) for band in ("1–2 floors", "3–4 floors", "10+ floors")]
     assert positions == sorted(positions)
+
+
+def test_centre_circles_do_not_block_building_tooltips():
+    html = scenario_map(scenario(), AREA).get_root().render()
+    circles = [part for part in html.split("L.circle(")[1:]]
+    assert len(circles) == 4 and all('"interactive": false' in c[:600] for c in circles)
+    # drawn before the buildings, so buildings are on top
+    assert html.index("L.circle(") < html.index("L.circleMarker(")

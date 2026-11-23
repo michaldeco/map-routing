@@ -110,6 +110,31 @@ def scenario_map(scenario: Scenario, area: Area) -> folium.Map:
         for i, g in enumerate(names)
     }
 
+    # Centres first, so the buildings are drawn (and receive the mouse) on top.
+    centres = scenario.meta.parameters.get("centres", [])
+    if centres:
+        layer = folium.FeatureGroup(name="Dense area centres (1σ, 2σ)")
+        for i, c in enumerate(centres):
+            colour = colours.get(f"area{i + 1}", OTHER_COLOUR)
+            for k in (1, 2):
+                folium.Circle(
+                    [c["lat"], c["lon"]],
+                    radius=k * c["sigma_m"],
+                    color=colour,
+                    weight=2 if k == 1 else 1,
+                    fill=False,
+                    dash_array=None if k == 1 else "4",
+                    # Outlines only: never take mouse events. On a canvas map, Leaflet
+                    # hit-tests a circle's whole disc even without fill, which would hide
+                    # the tooltips of every building inside.
+                    interactive=False,
+                ).add_to(layer)
+            folium.Marker(
+                [c["lat"], c["lon"]],
+                tooltip=f"area{i + 1}: weight {c['weight']:.0%}, σ = {c['sigma_m']:g} m",
+            ).add_to(layer)
+        layer.add_to(m)
+
     for name in names:
         layer = folium.FeatureGroup(name=f"{name} ({len(groups[name]):,})")
         for loc in groups[name]:
@@ -135,26 +160,6 @@ def scenario_map(scenario: Scenario, area: Area) -> folium.Map:
                 fill_opacity=0.75,
                 popup=folium.Popup(popup, max_width=320),
                 tooltip=f"{loc.id}: {loc.visits_per_week}×/week",
-            ).add_to(layer)
-        layer.add_to(m)
-
-    centres = scenario.meta.parameters.get("centres", [])
-    if centres:
-        layer = folium.FeatureGroup(name="Dense area centres (1σ, 2σ)")
-        for i, c in enumerate(centres):
-            colour = colours.get(f"area{i + 1}", OTHER_COLOUR)
-            for k in (1, 2):
-                folium.Circle(
-                    [c["lat"], c["lon"]],
-                    radius=k * c["sigma_m"],
-                    color=colour,
-                    weight=2 if k == 1 else 1,
-                    fill=False,
-                    dash_array=None if k == 1 else "4",
-                ).add_to(layer)
-            folium.Marker(
-                [c["lat"], c["lon"]],
-                tooltip=f"area{i + 1}: weight {c['weight']:.0%}, σ = {c['sigma_m']:g} m",
             ).add_to(layer)
         layer.add_to(m)
 
