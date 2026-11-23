@@ -1,2 +1,3 @@
-def hello() -> str:
-    return "Hello from map-routing!"
+"""Weekly visit scheduling and walking-route optimization on OpenStreetMap data."""
+
+__version__ = "0.1.0"
