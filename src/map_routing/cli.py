@@ -1,7 +1,7 @@
 """Command-line interface: `map-routing area|buildings|scenario ...`."""
 
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, get_args
 
 import typer
 
@@ -100,6 +100,8 @@ def buildings_impute(
     from map_routing.buildings.impute import load_config, run
 
     area_dir = load_settings().area_dir(slug)
+    if config is not None and not config.exists():
+        raise typer.BadParameter(f"{config} not found", param_hint="--config")
     out, q = run(area_dir, load_config(area_dir, config))
     typer.echo(f"{q['buildings']:,} buildings, {q['residential']:,} residential -> {out}")
     notes = q["notes"]
@@ -169,6 +171,12 @@ def scenario_generate(
 
     if size not in SIZES:
         raise typer.BadParameter(f"size must be one of {list(SIZES)}")
+    for option, value in (("layout", layout), ("load", load)):
+        choices = get_args(GeneratorConfig.model_fields[option].annotation)
+        if value not in choices:
+            raise typer.BadParameter(
+                f"{option} must be one of {list(choices)}", param_hint=f"--{option}"
+            )
     settings = load_settings()
     area_dir = settings.area_dir(slug)
     cfg = GeneratorConfig(layout=layout, load=load)

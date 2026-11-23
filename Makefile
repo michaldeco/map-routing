@@ -16,7 +16,7 @@ lint: ## Check code with ruff
 	uv run ruff check .
 
 format: ## Fix imports and lint issues ruff can fix, then format with black
-	uv run ruff check --fix .
+	uv run ruff check --fix --exit-zero .
 	uv run black .
 
 format-check: ## Check formatting without changing files

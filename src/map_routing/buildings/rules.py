@@ -240,15 +240,14 @@ class FloorsRule:
 
         observed = b.floors.notna() & b.residential
         values = b.loc[observed, "floors"].to_numpy()
-        if observed.any():
+        if len(values) >= cfg.neighbour_k:  # fewer observed: skip to the area fallbacks
             xy = np.column_stack(_xy(b, ctx.utm))
             tree = cKDTree(xy[observed.to_numpy()])
             for radius in cfg.neighbour_radii_m:
                 missing = (b.floors.isna() & b.residential).to_numpy()
                 if not missing.any():
                     break
-                k = min(cfg.neighbour_k, len(values))
-                dist, idx = tree.query(xy[missing], k=k, distance_upper_bound=radius)
+                dist, idx = tree.query(xy[missing], k=cfg.neighbour_k, distance_upper_bound=radius)
                 dist, idx = dist.reshape(len(dist), -1), idx.reshape(len(idx), -1)
                 enough = np.isfinite(dist).all(axis=1)
                 if not enough.any():

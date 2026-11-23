@@ -106,3 +106,26 @@ def test_existing_file_is_reused(tmp_path):
         raise AssertionError("must not download")
 
     assert ensure_downloaded(tmp_path, _extract(), "ua", fetch=fail, download=fail) == path
+
+
+def test_broken_index_download_is_not_cached(tmp_path):
+    def truncated(url, ua):
+        return b'{"type": "FeatureCollection", "feat'
+
+    with pytest.raises(ValueError):
+        GeofabrikIndex.load(tmp_path, "ua", fetch=truncated, now=lambda: 0)
+    assert not (tmp_path / "index-v1.json").exists()
+    assert not list(tmp_path.glob("*.part"))
+
+
+def test_failed_refresh_falls_back_to_stale_cache(tmp_path):
+    path = tmp_path / "index-v1.json"
+    path.write_text(json.dumps(FAKE_INDEX))
+    os.utime(path, (0, 0))
+
+    def offline(url, ua):
+        raise OSError("network down")
+
+    with pytest.warns(UserWarning, match="using the cached copy"):
+        index = GeofabrikIndex.load(tmp_path, "ua", fetch=offline, now=lambda: 30 * 24 * 3600)
+    assert len(index.extracts) == 3

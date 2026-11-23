@@ -12,7 +12,7 @@ from typing import Literal
 
 import geopandas as gpd
 import numpy as np
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from scipy.spatial import cKDTree
 
 from map_routing.area.model import Area
@@ -43,6 +43,18 @@ class GeneratorConfig(BaseModel):
     duration_noise_sd_min: float = 3.0
     duration_range_min: tuple[float, float] = (15.0, 90.0)
     shift_min: float = 480.0
+
+    @model_validator(mode="after")
+    def _consistent_components(self) -> GeneratorConfig:
+        if not len(self.component_weights) == len(self.component_sigma_m) == self.n_centres:
+            raise ValueError(
+                f"n_centres ({self.n_centres}), component_weights "
+                f"({len(self.component_weights)}) and component_sigma_m "
+                f"({len(self.component_sigma_m)}) must have the same length"
+            )
+        if any(w < 0 for w in self.component_weights) or sum(self.component_weights) > 1:
+            raise ValueError("component_weights must be >= 0 and sum to at most 1 (rest: outliers)")
+        return self
 
 
 def load_pool(area_dir) -> gpd.GeoDataFrame:
@@ -147,16 +159,27 @@ def _opt(value: object) -> str | None:
     return None if value is None or (isinstance(value, float) and np.isnan(value)) else str(value)
 
 
+def _positive(value: object) -> float | None:
+    """A measurement only when it is a positive number (degenerate outlines give 0)."""
+    v = float(value) if value is not None else float("nan")
+    return v if v > 0 else None
+
+
 def generate(area_dir, area: Area, size: str, seed: int, cfg: GeneratorConfig) -> Scenario:
     """Scenario of the given size. Always samples the full ordered set first and takes
     a prefix, so the same seed gives nested scenarios across sizes."""
     pool = load_pool(area_dir)
     rng = np.random.default_rng(seed)
-    order, labels, layout_info = sample_order(pool, area, cfg, rng, SIZES["full"])
+    n = SIZES[size]
+    if len(pool) < n:
+        raise ValueError(f"only {len(pool)} residential buildings, need {n} for size {size!r}")
+    # Always draw the longest possible ordered sample (up to `full`), so smaller sizes
+    # are prefixes of larger ones, also in areas with fewer buildings than `full`.
+    n_ordered = min(SIZES["full"], len(pool))
+    order, labels, layout_info = sample_order(pool, area, cfg, rng, n_ordered)
     rows = pool.iloc[order].reset_index(drop=True)
     visits, duration, days = demand(rng, rows.floors.to_numpy(dtype=float), cfg)
 
-    n = SIZES[size]
     locations = [
         Location(
             id=f"b{i + 1:04d}",
@@ -165,7 +188,7 @@ def generate(area_dir, area: Area, size: str, seed: int, cfg: GeneratorConfig) -
             lon=float(rows.lon.iloc[i]),
             address=_opt(rows.address.iloc[i]),
             floors=float(rows.floors.iloc[i]),
-            footprint_m2=float(rows.footprint_m2.iloc[i]),
+            footprint_m2=_positive(rows.footprint_m2.iloc[i]),
             floors_source=_opt(rows.floors_source.iloc[i]),
             address_source=_opt(rows.address_source.iloc[i]),
             visits_per_week=int(visits[i]),

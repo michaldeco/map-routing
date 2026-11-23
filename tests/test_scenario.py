@@ -76,3 +76,18 @@ def test_csv_errors_are_reported(tmp_path):
     csv.write_text(csv.read_text().replace(",2,30.0,", ",9,30.0,"))
     with pytest.raises(ValidationError, match="visits_per_week"):
         read_scenario(tmp_path)
+
+
+def test_house_number_addresses_stay_text(tmp_path):
+    """Villages often have addresses that are only house numbers."""
+    inst = Scenario(
+        meta=meta(),
+        locations=[
+            loc("a", address="12"),
+            loc("b", address=None),
+            loc("c", address="0014"),
+        ],
+    )
+    write_scenario(inst, tmp_path)
+    back = read_scenario(tmp_path)
+    assert [loc.address for loc in back.locations] == ["12", None, "0014"]

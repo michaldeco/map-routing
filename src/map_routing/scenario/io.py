@@ -30,6 +30,9 @@ def read_scenario(directory: Path) -> Scenario:
     meta = json.loads((directory / "scenario.json").read_text())
     meta.pop("locations", None)
     meta.pop("visits_per_week", None)
-    df = pd.read_csv(directory / "buildings.csv", dtype={"id": str, "osm_id": str})
+    # Text columns stay text even when every value looks like a number (e.g. addresses
+    # that are only house numbers).
+    text = ["id", "osm_id", "address", "floors_source", "address_source", "allowed_days"]
+    df = pd.read_csv(directory / "buildings.csv", dtype=dict.fromkeys(text, str))
     records = df.astype(object).where(df.notna(), None).to_dict(orient="records")
     return Scenario(meta=ScenarioMeta.model_validate(meta), locations=records)

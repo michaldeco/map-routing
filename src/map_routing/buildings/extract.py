@@ -52,6 +52,18 @@ def features_to_gdf(features: Iterator[dict]) -> gpd.GeoDataFrame:
     return gpd.GeoDataFrame(pd.DataFrame(rows, columns=columns), geometry=geoms, crs=WGS84)
 
 
+def keep_matching(gdf: gpd.GeoDataFrame, column: str, value: str | None = None):
+    """Rows whose tag matches the filter that selected them.
+
+    `osmium tags-filter` also keeps objects referenced by matching relations (the
+    member ways of a multipolygon building or land use area), and some of those carry
+    other tags (e.g. `building:part=yes`), so they come out of the export as extra
+    features. Without this check they would count as untyped buildings.
+    """
+    mask = gdf[column].notna() if value is None else gdf[column].eq(value)
+    return gdf[mask].reset_index(drop=True)
+
+
 def add_measures(gdf: gpd.GeoDataFrame, area: Area) -> gpd.GeoDataFrame:
     """Footprint area (m²) and centroid, both computed in the area's UTM zone."""
     utm = gdf.to_crs(utm_crs_for(area.geometry))
@@ -78,7 +90,7 @@ def extract_buildings(area: Area, area_dir: Path) -> tuple[Path, Path]:
         raise FileNotFoundError("area.osm.pbf missing; run `map-routing area fetch` first")
 
     seq = _export(area_dir, "buildings", "wr/building", "polygon")
-    buildings = add_measures(features_to_gdf(read_geojsonseq(seq)), area)
+    buildings = add_measures(keep_matching(features_to_gdf(read_geojsonseq(seq)), "building"), area)
     seq.unlink()
     # The cut keeps buildings crossing the boundary whole; a building belongs to the
     # area when its centroid lies inside the boundary.
@@ -86,12 +98,12 @@ def extract_buildings(area: Area, area_dir: Path) -> tuple[Path, Path]:
     buildings = buildings[area.geometry.covers(centroids)].reset_index(drop=True)
 
     landuse_seq = _export(area_dir, "landuse", "wr/landuse=residential", "polygon")
-    landuse = features_to_gdf(read_geojsonseq(landuse_seq))
+    landuse = keep_matching(features_to_gdf(read_geojsonseq(landuse_seq)), "landuse", "residential")
     landuse_seq.unlink()
     landuse["kind"] = "residential_landuse"
 
     address_seq = _export(area_dir, "addresses", "n/addr:housenumber", "point")
-    addresses = features_to_gdf(read_geojsonseq(address_seq))
+    addresses = keep_matching(features_to_gdf(read_geojsonseq(address_seq)), "addr_housenumber")
     address_seq.unlink()
     addresses["kind"] = "address"
 

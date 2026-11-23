@@ -50,6 +50,10 @@
   <node id="48" version="1" lat="40.6220000" lon="22.9504000"/>
   <node id="49" version="1" lat="40.6201000" lon="22.9501000"><tag k="addr:housenumber" v="5"/><tag k="addr:street" v="Tsimiski"/></node>
   <node id="50" version="1" lat="40.6201000" lon="22.9530000"><tag k="addr:housenumber" v="7"/><tag k="addr:street" v="Tsimiski"/></node>
+  <node id="51" version="1" lat="40.6260000" lon="22.9500000"/>
+  <node id="52" version="1" lat="40.6260000" lon="22.9505000"/>
+  <node id="53" version="1" lat="40.6265000" lon="22.9505000"/>
+  <node id="54" version="1" lat="40.6265000" lon="22.9500000"/>
   <way id="100" version="1"><nd ref="1"/><nd ref="2"/><nd ref="3"/><nd ref="4"/><nd ref="1"/><tag k="landuse" v="residential"/></way>
   <way id="200" version="1"><nd ref="5"/><nd ref="6"/><nd ref="7"/><nd ref="8"/><nd ref="5"/><tag k="building" v="apartments"/><tag k="building:levels" v="6"/><tag k="addr:street" v="Egnatia"/><tag k="addr:housenumber" v="1"/></way>
   <way id="201" version="1"><nd ref="9"/><nd ref="10"/><nd ref="11"/><nd ref="12"/><nd ref="9"/><tag k="building" v="yes"/></way>
@@ -60,7 +64,9 @@
   <way id="206" version="1"><nd ref="29"/><nd ref="30"/><nd ref="31"/><nd ref="32"/><nd ref="29"/><tag k="building" v="garage"/></way>
   <way id="207" version="1"><nd ref="33"/><nd ref="34"/><nd ref="35"/><nd ref="36"/><nd ref="33"/><tag k="building" v="yes"/></way>
   <way id="300" version="1"><nd ref="37"/><nd ref="38"/><nd ref="39"/><nd ref="40"/><nd ref="37"/><tag k="leisure" v="park"/></way>
-  <way id="400" version="1"><nd ref="41"/><nd ref="42"/><nd ref="43"/><nd ref="44"/><nd ref="41"/></way>
+  <way id="400" version="1"><nd ref="41"/><nd ref="42"/><nd ref="43"/><nd ref="44"/><nd ref="41"/><tag k="building:part" v="yes"/></way>
   <way id="401" version="1"><nd ref="45"/><nd ref="46"/><nd ref="47"/><nd ref="48"/><nd ref="45"/></way>
+  <way id="403" version="1"><nd ref="51"/><nd ref="52"/><nd ref="53"/><nd ref="54"/><nd ref="51"/><tag k="landuse" v="grass"/></way>
   <relation id="500" version="1"><member type="way" ref="400" role="outer"/><member type="way" ref="401" role="inner"/><tag k="type" v="multipolygon"/><tag k="building" v="apartments"/></relation>
+  <relation id="502" version="1"><member type="way" ref="403" role="outer"/><tag k="type" v="multipolygon"/><tag k="landuse" v="residential"/></relation>
 </osm>

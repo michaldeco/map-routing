@@ -111,8 +111,53 @@ def test_compact_layout(area_dir):
     assert inst.meta.name == "syn-small-compact-s1"
 
 
-def test_pool_too_small(tmp_path, area_dir):
-    b = gpd.read_parquet(area_dir / "buildings.parquet").head(500)
+def test_small_area_still_gives_nested_small_and_medium(tmp_path, area_dir):
+    """An area with fewer residential buildings than `full` can still give smaller sizes."""
+    b = gpd.read_parquet(area_dir / "buildings.parquet").head(500)  # 450 residential
     b.to_parquet(tmp_path / "buildings.parquet")
+    small = generate(tmp_path, AREA, "small", 1, GeneratorConfig())
+    medium = generate(tmp_path, AREA, "medium", 1, GeneratorConfig())
+    assert len(small.locations) == 100
+    assert small.locations == medium.locations[:100]
     with pytest.raises(ValueError, match="need 1000"):
-        generate(tmp_path, AREA, "small", 1, GeneratorConfig())
+        generate(tmp_path, AREA, "full", 1, GeneratorConfig())
+
+
+def test_zero_footprint_does_not_crash(tmp_path, area_dir):
+    b = gpd.read_parquet(area_dir / "buildings.parquet")
+    b["footprint_m2"] = 0.0  # degenerate outlines, e.g. a mis-drawn building=house
+    b.to_parquet(tmp_path / "buildings.parquet")
+    inst = generate(tmp_path, AREA, "small", 1, GeneratorConfig())
+    assert all(loc.footprint_m2 is None for loc in inst.locations)
+
+
+@pytest.mark.parametrize(
+    "kw",
+    [
+        {"n_centres": 2},
+        {"component_weights": [0.6, 0.3, 0.2]},
+        {"component_weights": [0.5, -0.1, 0.1]},
+    ],
+)
+def test_inconsistent_component_settings_are_rejected(kw):
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        GeneratorConfig(**kw)
+
+
+def test_two_centres_when_configured_consistently(area_dir):
+    cfg = GeneratorConfig(n_centres=2, component_weights=[0.6, 0.3], component_sigma_m=[700, 500])
+    inst = generate(area_dir, AREA, "small", 1, cfg)
+    assert set(inst.meta.parameters["component_counts"]) <= {"area1", "area2", "outlier"}
+
+
+@pytest.mark.parametrize("option,value", [("--layout", "spiral"), ("--load", "heavy")])
+def test_cli_rejects_unknown_choices_cleanly(option, value):
+    from typer.testing import CliRunner
+
+    from map_routing.cli import app
+
+    result = CliRunner().invoke(app, ["scenario", "generate", "x", option, value])
+    assert result.exit_code == 2  # usage error, no traceback
+    assert option in result.output and "must be one of" in result.output

@@ -4,6 +4,7 @@ import hashlib
 import json
 import time
 import urllib.parse
+import warnings
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -59,8 +60,20 @@ class GeofabrikIndex:
         """Index from the cache; refreshed when older than a week."""
         path = cache_dir / "index-v1.json"
         if not path.exists() or now() - path.stat().st_mtime > INDEX_MAX_AGE_S:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(fetch(INDEX_URL, user_agent))
+            try:
+                data = fetch(INDEX_URL, user_agent)
+                json.loads(data)  # never cache a truncated or broken index
+            except (OSError, ValueError) as exc:
+                if not path.exists():
+                    raise
+                warnings.warn(
+                    f"Geofabrik index refresh failed ({exc}); using the cached copy", stacklevel=2
+                )
+            else:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                partial = path.with_name(path.name + ".part")
+                partial.write_bytes(data)
+                partial.replace(path)  # atomic: the file is complete or not there
         return cls.from_geojson(json.loads(path.read_text()))
 
     def smallest_containing(self, area: BaseGeometry) -> Extract:

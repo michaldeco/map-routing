@@ -191,3 +191,24 @@ def test_weighted_median(values, weights, expected):
     from map_routing.buildings.rules import weighted_median
 
     assert weighted_median(np.array(values, float), np.array(weights, float)) == expected
+
+
+def test_neighbour_median_needs_k_observed_buildings():
+    """One tagged 12-floor building must not set the floors of everything nearby."""
+    items = [building(0, 0, "apartments", building_levels="12")] + [
+        building(20 * i, 50, "apartments") for i in range(1, 6)
+    ]
+    cfg = ImputationConfig(landuse_mode="ignore")
+    out, _ = impute(gdf(items), context(), AREA, cfg)
+    assert out.iloc[1:].floors_source.eq("default_median").all()
+    assert out.iloc[1:].floors.eq(2.0).all()
+
+
+def test_explicit_config_must_exist(tmp_path):
+    from map_routing.buildings.impute import load_config
+
+    assert load_config(tmp_path) == ImputationConfig()  # implicit file is optional
+    with pytest.raises(FileNotFoundError):
+        load_config(tmp_path, tmp_path / "imputaton.json")
+    (tmp_path / "custom.json").write_text('{"min_footprint_m2": 80}')
+    assert load_config(tmp_path, tmp_path / "custom.json").min_footprint_m2 == 80

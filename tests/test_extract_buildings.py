@@ -37,7 +37,7 @@ def test_extract_fixture(area_dir):
     assert rel.geometry.geom_type == "MultiPolygon"  # courtyard kept as a hole
 
     c = gpd.read_parquet(context_path)
-    assert c.kind.value_counts().to_dict() == {"address": 2, "residential_landuse": 1}
+    assert c.kind.value_counts().to_dict() == {"address": 2, "residential_landuse": 2}
     assert not list(area_dir.glob("*.geojsonseq"))  # temporary files removed
 
 
@@ -57,3 +57,17 @@ def test_extract_then_impute_fixture(area_dir):
     assert not b.loc["w205", "residential"]  # building=yes with amenity=place_of_worship
     assert b.loc["w200", "address"] == "Egnatia 1"
     assert (area_dir / "quality.json").exists() and q["buildings"] == 9
+
+
+def test_relation_members_with_other_tags_are_not_extracted(area_dir):
+    """osmium keeps member ways of matching relations; only tagged features count."""
+    bbox = "22.94,40.61,22.96,40.63"
+    area = make_area("tiny", "Tiny", AreaDefinition(kind="bbox", value=bbox), parse_bbox(bbox))
+    buildings_path, context_path = extract_buildings(area, area_dir)
+    b = gpd.read_parquet(buildings_path)
+    assert "w400" not in set(b.osm_id)  # building:part outer way of r500
+    assert b.building.notna().all()
+    c = gpd.read_parquet(context_path)
+    landuse = c[c.kind == "residential_landuse"]
+    assert set(landuse.landuse) == {"residential"}  # not the landuse=grass member way
+    assert set(landuse.osm_id) == {"w100", "r502"}

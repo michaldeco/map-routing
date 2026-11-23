@@ -12,7 +12,10 @@ from map_routing.geo import utm_crs_for
 
 
 def load_config(area_dir: Path, override: Path | None = None) -> ImputationConfig:
-    """Defaults, overridden by `imputation.json` in the area folder or an explicit file."""
+    """Defaults, overridden by `imputation.json` in the area folder or an explicit file.
+    An explicit file must exist; only the implicit one is optional."""
+    if override is not None and not override.exists():
+        raise FileNotFoundError(f"imputation config {override} not found")
     path = override or area_dir / "imputation.json"
     if path.exists():
         return ImputationConfig.model_validate_json(path.read_text())
