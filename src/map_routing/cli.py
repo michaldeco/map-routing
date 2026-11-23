@@ -188,3 +188,80 @@ def scenario_generate(
         f"per week -> {out}"
     )
     typer.echo("  " + ", ".join(f"{k}: {v}" for k, v in counts.items()))
+
+
+@scenario_app.command("map")
+def scenario_map_cmd(
+    path: Path,
+    out: Annotated[Path | None, typer.Option(help="HTML file (default: <path>/map.html)")] = None,
+) -> None:
+    """Write an interactive map of a scenario's locations (open it in a browser)."""
+    from map_routing.area.model import Area
+    from map_routing.maps import scenario_map
+    from map_routing.scenario.io import read_scenario
+
+    scenario = read_scenario(path)
+    area = Area.load(load_settings().area_dir(scenario.meta.area_slug))
+    target = out or path / "map.html"
+    scenario_map(scenario, area).save(target)
+    typer.echo(f"Map of {len(scenario.locations):,} locations -> {target}")
+    typer.echo(f"Open it with: map-routing view {target}")
+
+
+@buildings_app.command("map")
+def buildings_map_cmd(
+    slug: str,
+    colour_by: Annotated[
+        str, typer.Option(help="residential, reason, floors-source or floors")
+    ] = "reason",
+    sample: Annotated[int, typer.Option(help="Show a random sample of this many buildings")] = 5000,
+    all_buildings: Annotated[
+        bool, typer.Option("--all", help="Show every building (slow above ~10,000)")
+    ] = False,
+    seed: Annotated[int, typer.Option(help="Seed for the random sample")] = 0,
+    residential_only: Annotated[bool, typer.Option(help="Only residential buildings")] = False,
+    out: Annotated[Path | None, typer.Option(help="HTML file (default: area folder)")] = None,
+) -> None:
+    """Write an interactive map of the imputed buildings (open it in a browser)."""
+    import geopandas as gpd
+
+    from map_routing.area.model import Area
+    from map_routing.maps import COLOUR_BY, buildings_map
+
+    if colour_by not in COLOUR_BY:
+        raise typer.BadParameter(f"must be one of {list(COLOUR_BY)}", param_hint="--colour-by")
+    if sample < 1:
+        raise typer.BadParameter("must be at least 1", param_hint="--sample")
+    area_dir = load_settings().area_dir(slug)
+    path = area_dir / "buildings.parquet"
+    if not path.exists():
+        raise typer.BadParameter(f"{path} missing; run `buildings impute {slug}` first")
+    buildings = gpd.read_parquet(path)
+    m = buildings_map(
+        buildings,
+        Area.load(area_dir),
+        colour_by=colour_by,
+        sample=None if all_buildings else sample,
+        seed=seed,
+        residential_only=residential_only,
+    )
+    suffix = "-residential" if residential_only else ""
+    target = out or area_dir / f"buildings-{colour_by}{suffix}.html"
+    m.save(target)
+    typer.echo(f"Map -> {target}")
+    typer.echo(f"Open it with: map-routing view {target}")
+
+
+@app.command("view")
+def view_cmd(
+    file: Path,
+    port: Annotated[int, typer.Option(help="Local port")] = 8765,
+    no_browser: Annotated[bool, typer.Option("--no-browser", help="Only serve")] = False,
+) -> None:
+    """Open a generated map in the browser (served from http://127.0.0.1, so the
+    OpenStreetMap background loads; opened as a plain file it would be blocked)."""
+    from map_routing.maps import view
+
+    if not file.is_file():
+        raise typer.BadParameter(f"{file} not found")
+    view(file, port=port, open_browser=not no_browser)

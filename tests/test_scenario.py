@@ -91,3 +91,9 @@ def test_house_number_addresses_stay_text(tmp_path):
     write_scenario(inst, tmp_path)
     back = read_scenario(tmp_path)
     assert [loc.address for loc in back.locations] == ["12", None, "0014"]
+
+
+def test_component_round_trip(tmp_path):
+    inst = Scenario(meta=meta(), locations=[loc("a", component="area1"), loc("b")])
+    write_scenario(inst, tmp_path)
+    assert [loc.component for loc in read_scenario(tmp_path).locations] == ["area1", None]
