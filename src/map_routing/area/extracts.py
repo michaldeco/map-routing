@@ -70,10 +70,18 @@ class GeofabrikIndex:
                     f"Geofabrik index refresh failed ({exc}); using the cached copy", stacklevel=2
                 )
             else:
+                # Write to a temporary file, then rename it over the cache. Writing the
+                # cache directly would first truncate it: if the process were killed or
+                # the disk filled up halfway, a half-written file with a fresh timestamp
+                # would remain, count as valid for a week and break every `area fetch`.
+                # A rename within one filesystem is atomic, so readers always see either
+                # the old or the new complete file. (Not protected against power loss,
+                # which would need fsync; acceptable for a cache that can be downloaded
+                # again.)
                 path.parent.mkdir(parents=True, exist_ok=True)
                 partial = path.with_name(path.name + ".part")
                 partial.write_bytes(data)
-                partial.replace(path)  # atomic: the file is complete or not there
+                partial.replace(path)
         return cls.from_geojson(json.loads(path.read_text()))
 
     def smallest_containing(self, area: BaseGeometry) -> Extract:
