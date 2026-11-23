@@ -80,28 +80,28 @@ command, inputs and outputs, so each can be tested and rerun alone.
   weighting or modelling where tags are present. Rules first; the classifier
   is a separate, swappable imputation rule.
 
-#### M1c Instance format (the engine's only input)
+#### M1c Scenario format (the engine's only input)
 
-- Map data (M1a, M1b) and instances are separate components. The engine
-  reads an instance and nothing else; it never knows where the instance
+- Map data (M1a, M1b) and scenarios are separate components. The engine
+  reads a scenario and nothing else; it never knows where the scenario
   came from.
 - Contract: locations (id, coordinates, optional address and building
   attributes with their value sources), visit demand (visits per week,
   duration, allowed days), workforce settings (shift length, optional
   start points), the area reference (for the travel-time provider).
-- Files: `buildings.csv` (or `locations.csv`) + `instance.json` (parameters,
+- Files: `buildings.csv` (or `locations.csv`) + `scenario.json` (parameters,
   area, source, data date, seed if synthetic). A schema with validation
   (Pydantic): ranges, unique ids, points inside the area, consistent
   allowed days vs frequency. Every source passes the same checks.
 
-#### M1d Synthetic instance generator (one source of instances)
+#### M1d Synthetic scenario generator (one source of scenarios)
 
 - Uses the imputed buildings from M1b as the pool to sample from.
 - Spatial layout: real customer bases are uneven, so buildings are sampled
   as a mixture of 2–3 dense areas of different sizes (e.g. 50 / 30 / 15 %)
   plus ~5 % scattered outliers. Number of areas, sizes and outlier share are
   parameters; a single compact area is kept as a simpler comparison case.
-- Instances: `small` (~100 buildings) for tests and development, `medium`
+- Scenarios: `small` (~100 buildings) for tests and development, `medium`
   (~300), `full` (1,000), nested (small ⊂ medium ⊂ full), same mixture.
 - Demand with a fixed seed: visit frequency per week from a configurable
   distribution; cleaning duration from floors and footprint (e.g. 15 min
@@ -111,16 +111,16 @@ command, inputs and outputs, so each can be tested and rerun alone.
 - Load: "up to 5,000 recurring visits" is ambiguous (per week, or visit
   definitions?). Test a moderate load (~2 visits per building per week) and
   the 5,000-visits-per-week case.
-- Generated instances are not committed (gitignored); regenerate them with `instance generate`.
+- Generated scenarios are not committed (gitignored); regenerate them with `scenario generate`.
 
-#### Later: user import (another source of instances)
+#### Later: user import (another source of scenarios)
 
 - CSV with coordinates or addresses, visits per week, duration, allowed
   days; addresses geocoded through the `Geocoder` interface (M2).
 - Optional enrichment: match each location to its OSM building and fill
   missing floors or durations with the M1b imputation rules, recording the
   value sources as usual.
-- Produces the same instance format and passes the same validation.
+- Produces the same scenario format and passes the same validation.
 
 #### Notes for later milestones
 
@@ -198,7 +198,7 @@ command, inputs and outputs, so each can be tested and rerun alone.
 
 ### M8 Scale test and baselines
 
-- Run the `full` instance: run time per stage, total walking time, cleaners.
+- Run the `full` scenario: run time per stage, total walking time, cleaners.
 - Baselines: nearest-neighbour routes without clustering; no-spacing weekday
   assignment. Show what each stage of the engine saves.
 

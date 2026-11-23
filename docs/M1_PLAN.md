@@ -1,4 +1,4 @@
-# M1 implementation plan: map data and instances
+# M1 implementation plan: map data and scenarios
 
 ## Context
 
@@ -8,7 +8,7 @@ needs realistic input before any optimization can be built. `docs/PLAN.md`
 
 - **Map data** (M1a area and extract, M1b buildings + imputation): works for
   any OpenStreetMap area; Thessaloniki is only the first example.
-- **Instances** (M1c format, M1d synthetic generator): the instance format
+- **Scenarios** (M1c format, M1d synthetic generator): the scenario format
   is the engine's only input; the synthetic generator is one source, a user
   import comes later.
 
@@ -60,15 +60,15 @@ configurable, no personal details by default.
  ═════════════╪══════════════════════════════════════════════════════════
  INSTANCES    │ pool of residential buildings
               ▼
- [5] instance generate (synthetic source)      [later] user import (CSV,
+ [5] scenario generate (synthetic source)      [later] user import (CSV,
       mixture of dense areas + outliers,              geocoding, optional
       nested sizes, seeded demand                     OSM enrichment)
               │                                          │
               └──────────────┬───────────────────────────┘
                              ▼
- [4] instance format + validation (Pydantic) ── the engine's ONLY input
+ [4] scenario format + validation (Pydantic) ── the engine's ONLY input
                              │
-              data/instances/<slug>-<size>-<seed>/buildings.csv + instance.json
+              data/scenarios/<slug>-<size>-<seed>/buildings.csv + scenario.json
                              │
                              ▼
                  ENGINE (M3–M7: clustering, weekdays, routes, workforce)
@@ -81,7 +81,7 @@ cache miss; everything after `area fetch` runs offline.
 
 ```
 src/map_routing/
-  cli.py                 Typer app: `area`, `buildings`, `instance` command groups
+  cli.py                 Typer app: `area`, `buildings`, `scenario` command groups
   settings.py            paths (data dir), User-Agent (env MAP_ROUTING_USER_AGENT)
   geo.py                 local UTM CRS from an area's centre; WGS84 <-> UTM helpers
   osmium.py              thin subprocess wrapper around the osmium CLI (extract, tags-filter, export, fileinfo)
@@ -94,9 +94,9 @@ src/map_routing/
     extract.py           raw buildings + context layers (residential land use, address points) -> GeoParquet
     impute.py            rule pipeline, value-source columns, quality summary
     rules.py             individual imputation rules (pluggable)
-  instance/
-    schema.py            Pydantic models: Location, Demand, Workforce, InstanceMeta; validation
-    io.py                read/write buildings.csv + instance.json
+  scenario/
+    schema.py            Pydantic models: Location, Demand, Workforce, ScenarioMeta; validation
+    io.py                read/write buildings.csv + scenario.json
   synthetic/
     generator.py         mixture sampling (dense areas + outliers), nested sizes, demand
 ```
@@ -118,8 +118,8 @@ data/areas/<slug>/
   context.parquet        residential land use polygons, address points
   buildings.parquet      imputed buildings with value sources
   quality.json           tagged vs imputed counts per field and rule
-data/instances/<slug>-<size>-<seed>/
-  buildings.csv, instance.json
+data/scenarios/<slug>-<size>-<seed>/
+  buildings.csv, scenario.json
 ```
 
 Move the existing `data/raw/greece-latest.osm.pbf` into `data/cache/geofabrik/`
@@ -179,18 +179,18 @@ Move the existing `data/raw/greece-latest.osm.pbf` into `data/cache/geofabrik/`
 - Rules are small classes with a common interface (`name`, `apply(gdf, context)`),
   so the later classifier is one more rule.
 
-### Step 4 (M1c): instance format
-- Pydantic models; `instance validate <path>` command. Checks: unique ids,
+### Step 4 (M1c): scenario format
+- Pydantic models; `scenario validate <path>` command. Checks: unique ids,
   ranges (frequency 1–7, duration 5–240 min, shift > 0), allowed days ⊆ Mon–Sun
   and at least as many as the frequency, points inside the area boundary.
 - `buildings.csv` columns: id, osm_id, lat, lon, address, floors,
   footprint_m2, value sources, visits_per_week, duration_min, allowed_days.
-  `instance.json`: area slug + data date, source (`synthetic` / later `import`),
+  `scenario.json`: area slug + data date, source (`synthetic` / later `import`),
   generator parameters and seed, workforce settings (shift length, start
   points optional).
 
 ### Step 5 (M1d): synthetic generator
-- `instance generate <slug> --size small|medium|full --seed N [--layout mixed|compact] [--load moderate|high]`.
+- `scenario generate <slug> --size small|medium|full --seed N [--layout mixed|compact] [--load moderate|high]`.
 - Pool: imputed residential buildings.
 - Mixed layout: choose k centres (default 3) among buildings, weighted by local
   building density and at least D apart (default 1.5 km); component weights
@@ -202,7 +202,7 @@ Move the existing `data/raw/greece-latest.osm.pbf` into `data/cache/geofabrik/`
 - Demand (seeded): visits per week from a distribution (moderate: mean ~2;
   high: mean ~5, the 5,000-visits case); duration = 15 + 3 × floors min,
   clipped to 15–90, plus small noise; ~10 % of buildings with a forbidden day.
-- Output passes `instance validate` before it is written.
+- Output passes `scenario validate` before it is written.
 
 ## Tests (pytest)
 
@@ -225,8 +225,8 @@ Move the existing `data/raw/greece-latest.osm.pbf` into `data/cache/geofabrik/`
    Check: 113,802 buildings (the count found on 2026-11-21 for the same
    bbox and extract date), apartment/residential counts 6,252 / 3,835,
    and a plausible quality summary.
-3. `instance generate thessaloniki --size small|medium|full --seed 1`;
-   `instance validate` on each; open the instances in QGIS (or export
+3. `scenario generate thessaloniki --size small|medium|full --seed 1`;
+   `scenario validate` on each; open the scenarios in QGIS (or export
    GeoJSON) to eyeball the dense areas and outliers.
 4. Second area to prove nothing is Thessaloniki-specific:
    `area define bratislava-test --place "Petržalka, Bratislava"` -> fetch,

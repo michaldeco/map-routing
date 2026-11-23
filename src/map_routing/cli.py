@@ -1,4 +1,4 @@
-"""Command-line interface: `map-routing area|buildings|instance ...`."""
+"""Command-line interface: `map-routing area|buildings|scenario ...`."""
 
 from pathlib import Path
 from typing import Annotated
@@ -14,10 +14,10 @@ app = typer.Typer(
 )
 area_app = typer.Typer(no_args_is_help=True, help="Define areas and fetch their map data.")
 buildings_app = typer.Typer(no_args_is_help=True, help="Extract and impute buildings.")
-instance_app = typer.Typer(no_args_is_help=True, help="Generate and validate instances.")
+scenario_app = typer.Typer(no_args_is_help=True, help="Generate and validate scenarios.")
 app.add_typer(area_app, name="area")
 app.add_typer(buildings_app, name="buildings")
-app.add_typer(instance_app, name="instance")
+app.add_typer(scenario_app, name="scenario")
 
 
 @area_app.command("define")
@@ -122,36 +122,36 @@ def buildings_impute(
             typer.echo(f"  {rest:>8,}  ({len(items) - 10} other reasons, see quality.json)")
 
 
-@instance_app.command("validate")
-def instance_validate(path: Path) -> None:
-    """Check an instance folder against the format (and its area boundary, if defined)."""
+@scenario_app.command("validate")
+def scenario_validate(path: Path) -> None:
+    """Check a scenario folder against the format (and its area boundary, if defined)."""
     from pydantic import ValidationError
 
     from map_routing.area.model import Area
-    from map_routing.instance.io import read_instance
-    from map_routing.instance.schema import outside
+    from map_routing.scenario.io import read_scenario
+    from map_routing.scenario.schema import outside
 
     try:
-        instance = read_instance(path)
+        scenario = read_scenario(path)
     except ValidationError as exc:
-        typer.echo(f"Invalid instance:\n{exc}", err=True)
+        typer.echo(f"Invalid scenario:\n{exc}", err=True)
         raise typer.Exit(1) from exc
-    area_dir = load_settings().area_dir(instance.meta.area_slug)
+    area_dir = load_settings().area_dir(scenario.meta.area_slug)
     if (area_dir / "area.json").exists():
-        bad = outside(instance, Area.load(area_dir).geometry)
+        bad = outside(scenario, Area.load(area_dir).geometry)
         if bad:
             typer.echo(f"{len(bad)} location(s) outside the area, e.g. {bad[:5]}", err=True)
             raise typer.Exit(1)
     else:
-        typer.echo(f"Area {instance.meta.area_slug!r} not defined here; boundary not checked")
+        typer.echo(f"Area {scenario.meta.area_slug!r} not defined here; boundary not checked")
     typer.echo(
-        f"OK: {len(instance.locations):,} locations, "
-        f"{instance.visits_per_week:,} visits per week"
+        f"OK: {len(scenario.locations):,} locations, "
+        f"{scenario.visits_per_week:,} visits per week"
     )
 
 
-@instance_app.command("generate")
-def instance_generate(
+@scenario_app.command("generate")
+def scenario_generate(
     slug: str,
     size: Annotated[str, typer.Option(help="small (100), medium (300) or full (1,000)")] = "small",
     seed: Annotated[int, typer.Option(help="Random seed; same seed gives nested sizes")] = 1,
@@ -162,9 +162,9 @@ def instance_generate(
         str, typer.Option(help="moderate (~2 visits/week) or high (~4.5)")
     ] = "moderate",
 ) -> None:
-    """Generate a synthetic instance from the area's imputed buildings."""
+    """Generate a synthetic scenario from the area's imputed buildings."""
     from map_routing.area.model import Area
-    from map_routing.instance.io import write_instance
+    from map_routing.scenario.io import write_scenario
     from map_routing.synthetic.generator import SIZES, GeneratorConfig, generate
 
     if size not in SIZES:
@@ -172,11 +172,11 @@ def instance_generate(
     settings = load_settings()
     area_dir = settings.area_dir(slug)
     cfg = GeneratorConfig(layout=layout, load=load)
-    instance = generate(area_dir, Area.load(area_dir), size, seed, cfg)
-    out = write_instance(instance, settings.instances_dir / instance.meta.name)
-    counts = instance.meta.parameters["component_counts"]
+    scenario = generate(area_dir, Area.load(area_dir), size, seed, cfg)
+    out = write_scenario(scenario, settings.scenarios_dir / scenario.meta.name)
+    counts = scenario.meta.parameters["component_counts"]
     typer.echo(
-        f"{len(instance.locations):,} locations, {instance.visits_per_week:,} visits "
+        f"{len(scenario.locations):,} locations, {scenario.visits_per_week:,} visits "
         f"per week -> {out}"
     )
     typer.echo("  " + ", ".join(f"{k}: {v}" for k, v in counts.items()))

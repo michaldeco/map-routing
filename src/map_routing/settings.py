@@ -23,8 +23,8 @@ class Settings:
         return self.data_dir / "areas"
 
     @property
-    def instances_dir(self) -> Path:
-        return self.data_dir / "instances"
+    def scenarios_dir(self) -> Path:
+        return self.data_dir / "scenarios"
 
     def area_dir(self, slug: str) -> Path:
         return self.areas_dir / slug

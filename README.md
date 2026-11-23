@@ -4,7 +4,7 @@ Weekly visit scheduling and walking-route optimization for field workers,
 on real OpenStreetMap data: which buildings get visited on which day, by
 whom, in what order, and how many workers are needed.
 
-Work in progress: M1 (map data and instances) is done. See
+Work in progress: M1 (map data and scenarios) is done. See
 [docs/PLAN.md](docs/PLAN.md) and [docs/M1_PLAN.md](docs/M1_PLAN.md).
 
 ## Usage
@@ -22,9 +22,9 @@ uv run map-routing area fetch thessaloniki
 uv run map-routing buildings extract thessaloniki
 uv run map-routing buildings impute thessaloniki
 
-# 3. Generate a synthetic instance (the engine's input) and validate it
-uv run map-routing instance generate thessaloniki --size full --seed 1
-uv run map-routing instance validate data/instances/thessaloniki-full-s1
+# 3. Generate a synthetic scenario (the engine's input) and validate it
+uv run map-routing scenario generate thessaloniki --size full --seed 1
+uv run map-routing scenario validate data/scenarios/thessaloniki-full-s1
 ```
 
 Place names are resolved with Nominatim; set `MAP_ROUTING_USER_AGENT` to

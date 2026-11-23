@@ -6,8 +6,8 @@ from shapely.geometry import box
 
 from map_routing.area.model import AreaDefinition, make_area
 from map_routing.geo import WGS84
-from map_routing.instance.io import read_instance, write_instance
-from map_routing.instance.schema import outside
+from map_routing.scenario.io import read_scenario, write_scenario
+from map_routing.scenario.schema import outside
 from map_routing.synthetic.generator import SIZES, GeneratorConfig, generate
 
 AREA = make_area("syn", "Syn", AreaDefinition(kind="bbox", value="x"), box(22.8, 40.5, 23.1, 40.8))
@@ -64,8 +64,8 @@ def test_mixture_proportions_and_validity(area_dir, tmp_path_factory):
     )  # residential only
     assert outside(inst, AREA.geometry) == []
     out = tmp_path_factory.mktemp("inst")
-    write_instance(inst, out)
-    assert read_instance(out).visits_per_week == inst.visits_per_week
+    write_scenario(inst, out)
+    assert read_scenario(out).visits_per_week == inst.visits_per_week
 
 
 def test_dense_areas_are_dense(area_dir):

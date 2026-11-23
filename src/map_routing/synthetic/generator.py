@@ -1,7 +1,7 @@
-"""Synthetic instances: one source of instances, sampled from an area's imputed buildings.
+"""Synthetic scenarios: one source of scenarios, sampled from an area's imputed buildings.
 
 Real customer bases are uneven, so the default layout is a mixture of a few dense
-areas of different sizes plus scattered outliers. Instances of different sizes are
+areas of different sizes plus scattered outliers. Scenarios of different sizes are
 nested: `small` is a prefix of `medium`, which is a prefix of `full`, so results
 can be compared across sizes.
 """
@@ -17,7 +17,7 @@ from scipy.spatial import cKDTree
 
 from map_routing.area.model import Area
 from map_routing.geo import WGS84, utm_crs_for
-from map_routing.instance.schema import WEEKDAYS, Instance, InstanceMeta, Location, Workforce
+from map_routing.scenario.schema import WEEKDAYS, Location, Scenario, ScenarioMeta, Workforce
 
 SIZES = {"small": 100, "medium": 300, "full": 1000}
 LOADS = {
@@ -147,9 +147,9 @@ def _opt(value: object) -> str | None:
     return None if value is None or (isinstance(value, float) and np.isnan(value)) else str(value)
 
 
-def generate(area_dir, area: Area, size: str, seed: int, cfg: GeneratorConfig) -> Instance:
-    """Instance of the given size. Always samples the full ordered set first and takes
-    a prefix, so the same seed gives nested instances across sizes."""
+def generate(area_dir, area: Area, size: str, seed: int, cfg: GeneratorConfig) -> Scenario:
+    """Scenario of the given size. Always samples the full ordered set first and takes
+    a prefix, so the same seed gives nested scenarios across sizes."""
     pool = load_pool(area_dir)
     rng = np.random.default_rng(seed)
     order, labels, layout_info = sample_order(pool, area, cfg, rng, SIZES["full"])
@@ -175,8 +175,8 @@ def generate(area_dir, area: Area, size: str, seed: int, cfg: GeneratorConfig) -
         for i in range(n)
     ]
     component_counts = dict(sorted(Counter(labels[:n]).items()))
-    meta = InstanceMeta(
-        name=instance_name(area.slug, size, seed, cfg),
+    meta = ScenarioMeta(
+        name=scenario_name(area.slug, size, seed, cfg),
         area_slug=area.slug,
         area_data_date=area.data_date,
         source="synthetic",
@@ -191,10 +191,10 @@ def generate(area_dir, area: Area, size: str, seed: int, cfg: GeneratorConfig) -
         },
         workforce=Workforce(shift_min=cfg.shift_min),
     )
-    return Instance(meta=meta, locations=locations)
+    return Scenario(meta=meta, locations=locations)
 
 
-def instance_name(slug: str, size: str, seed: int, cfg: GeneratorConfig) -> str:
+def scenario_name(slug: str, size: str, seed: int, cfg: GeneratorConfig) -> str:
     parts = [slug, size]
     if cfg.layout != "mixed":
         parts.append(cfg.layout)

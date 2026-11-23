@@ -1,8 +1,23 @@
-"""The instance format: the engine's only input, whatever produced it.
+"""The scenario format: the engine's only input, whatever produced it.
 
-An instance is a folder with `instance.json` (metadata, workforce settings) and
-`buildings.csv` (one row per location with its visit demand). Synthetic data and
-user imports produce the same format and pass the same validation.
+A scenario describes one planning situation: which locations need visits, how
+often and for how long (the demand), on which weekdays visits are allowed, and the
+workforce settings (e.g. shift length). It contains no decisions; the engine
+(clustering, weekday assignment, routing, workforce calculation) turns a scenario
+into a weekly plan.
+
+Intended usage:
+- Synthetic scenarios (`map-routing scenario generate`) for development, tests,
+  benchmarks and the demo, in several sizes and loads, e.g.
+  `thessaloniki-full-high-s1`.
+- Later, a client's real customer list (user import), producing the same format.
+- What-if comparisons: variants of a scenario (more visits, longer shifts, added
+  buildings) planned and compared side by side; reoptimization starts from a
+  previous plan and a changed scenario.
+
+On disk, a scenario is a folder with `scenario.json` (metadata, source, seed,
+workforce settings) and `buildings.csv` (one row per location with its visit
+demand). Every source passes the same validation.
 """
 
 from datetime import datetime
@@ -63,7 +78,7 @@ class Workforce(BaseModel):
     start: Literal["first_visit"] = "first_visit"
 
 
-class InstanceMeta(BaseModel):
+class ScenarioMeta(BaseModel):
     name: str
     area_slug: str
     area_data_date: str | None = None
@@ -74,19 +89,19 @@ class InstanceMeta(BaseModel):
     workforce: Workforce = Field(default_factory=Workforce)
 
 
-class Instance(BaseModel):
-    meta: InstanceMeta
+class Scenario(BaseModel):
+    meta: ScenarioMeta
     locations: list[Location]
 
     @model_validator(mode="after")
-    def _unique_ids(self) -> Instance:
+    def _unique_ids(self) -> Scenario:
         seen, dupes = set(), set()
         for loc in self.locations:
             (dupes if loc.id in seen else seen).add(loc.id)
         if dupes:
             raise ValueError(f"duplicate location ids: {sorted(dupes)[:5]}")
         if not self.locations:
-            raise ValueError("instance has no locations")
+            raise ValueError("scenario has no locations")
         return self
 
     @property
@@ -94,6 +109,6 @@ class Instance(BaseModel):
         return sum(loc.visits_per_week for loc in self.locations)
 
 
-def outside(instance: Instance, boundary: BaseGeometry) -> list[str]:
+def outside(scenario: Scenario, boundary: BaseGeometry) -> list[str]:
     """Ids of locations outside the area boundary (a validation check that needs the area)."""
-    return [loc.id for loc in instance.locations if not boundary.covers(Point(loc.lon, loc.lat))]
+    return [loc.id for loc in scenario.locations if not boundary.covers(Point(loc.lon, loc.lat))]
