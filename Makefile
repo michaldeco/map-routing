@@ -1,7 +1,7 @@
 # Development commands. Run `make` or `make help` for the list.
 
 .DEFAULT_GOAL := help
-.PHONY: help install test lint format format-check validate clean
+.PHONY: help install test lint format format-check validate clean api
 
 help: ## Show available commands
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-14s %s\n", $$1, $$2}'
@@ -23,6 +23,9 @@ format-check: ## Check formatting without changing files
 	uv run black --check .
 
 validate: lint format-check test ## Everything CI would run: lint, format check, tests
+
+api: ## Run the API on http://127.0.0.1:8000 with reload (try it at /docs)
+	uv run map-routing api --reload
 
 clean: ## Remove caches (keeps data/ and .venv)
 	rm -rf .pytest_cache .ruff_cache

@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.14"
 dependencies = [
+    "fastapi>=0.165.0",
     "folium>=1.0.0",
     "geopandas>=1.2.0",
     "pyarrow>=26.0.1",
@@ -16,6 +17,7 @@ dependencies = [
     "scipy>=1.18.1",
     "shapely>=2.2.0",
     "typer>=0.29.2",
+    "uvicorn>=0.54.0",
 ]
 
 [project.scripts]
@@ -28,6 +30,7 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "black>=26.10.1",
+    "httpx>=0.28.1",
     "pytest>=9.2.0",
     "ruff>=0.17.6",
 ]
@@ -46,3 +49,7 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = ["osmium: needs the osmium command-line tool (skipped if missing)"]
+filterwarnings = [
+    # Starlette suggests the "httpx2" package; we stay with httpx until that is vetted.
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+]
