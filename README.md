@@ -34,9 +34,10 @@ identify yourself if you use it a lot. Data lives in `./data` (override with
 ## Development
 
 ```sh
-uv run pytest
-uv run ruff check .
-uv run black --check .
+make install    # dependencies and dev tools
+make validate   # lint (ruff), format check (black), tests (pytest)
+make format     # fix what ruff can fix, then format with black
+make            # list all commands
 ```
 
 Map data © OpenStreetMap contributors (ODbL).
