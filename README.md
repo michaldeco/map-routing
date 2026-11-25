@@ -10,7 +10,8 @@ Work in progress: M1 (map data and scenarios) is done. See
 ## Usage
 
 Requires Python 3.14 with [uv](https://docs.astral.sh/uv/) and the `osmium`
-command-line tool (Fedora: `dnf install osmium-tool`).
+command-line tool (Fedora: `dnf install osmium-tool`). The web app also needs
+Node.js 24 and [pnpm](https://pnpm.io/) (Fedora: `dnf install nodejs24 pnpm`).
 
 ```sh
 # 1. Define an area (bounding box, GeoJSON polygon or place name) and cut its map data
@@ -43,6 +44,15 @@ categories and plain-language explanations) and scenarios, as GeoJSON. Every
 endpoint can be tried at http://127.0.0.1:8000/docs. See
 [docs/UI_PLAN.md](docs/UI_PLAN.md).
 
+## Web app (in progress)
+
+`make dev` runs the API and the web app (`web/`: React, TypeScript, Vite,
+MapLibre GL JS on OpenFreeMap tiles) with live reload: open
+http://127.0.0.1:5173. So far it shows an area's boundary; buildings and
+scenarios follow. The web app's TypeScript types are generated from the API
+(`make api-types` after changing API models; `make validate` fails if they are
+out of date).
+
 Place names are resolved with Nominatim; set `MAP_ROUTING_USER_AGENT` to
 identify yourself if you use it a lot. Data lives in `./data` (override with
 `MAP_ROUTING_DATA_DIR`).
@@ -50,9 +60,11 @@ identify yourself if you use it a lot. Data lives in `./data` (override with
 ## Development
 
 ```sh
-make install    # dependencies and dev tools
-make validate   # lint (ruff), format check (black), tests (pytest)
-make format     # fix what ruff can fix, then format with black
+make install    # dependencies and dev tools (Python, web, Playwright's Chromium)
+make validate   # Python: ruff, black, pytest; web: types, tsc, ESLint, Prettier,
+                # Vitest, Playwright browser test
+make format     # ruff fixes + black; Prettier for web/
+make dev        # API + web app with live reload
 make            # list all commands
 ```
 

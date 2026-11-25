@@ -62,11 +62,12 @@ Decisions:
 - **Security**: bound to 127.0.0.1, read-only, every slug and scenario name
   validated (no path traversal), all text rendered as text (no raw HTML).
 
-## Three PRs
+## Five PRs
 
-Each PR stands alone: reviewable, working and tested.
+Each PR stands alone: reviewable, working and tested. PR 2 was split in three
+(setup, buildings, scenarios) because the frontend setup alone is many files.
 
-### PR 1: API (branch `ui-api`)
+### PR 1: API (branch `ui-api`, merged)
 
 - `map_routing/legends.py`: plain-language legend content (subtitles,
   explanations, floor bands, scenario group descriptions) moved out of
@@ -91,25 +92,39 @@ Each PR stands alone: reviewable, working and tested.
   `/docs` lets every endpoint be tried in the browser.
 - Tests with FastAPI's test client on small generated data.
 
-### PR 2: web app (branch `ui-web`)
+### PR 2: web setup and area map (branch `ui-web-setup`)
 
 - `web/`: Vite + React + TypeScript, MapLibre GL JS, OpenFreeMap style.
+  Node.js 24 and pnpm; exact versions, committed lockfile, packages younger
+  than 14 days refused, dependencies' install scripts never run.
 - `openapi-typescript` generates `web/src/api/types.ts` from the API
-  (`make api-types`); a check fails if it is out of date.
-- Control panel, map layers (area boundary, buildings or scenario locations,
-  dense-area centres and spread circles), legend with explanations, popups.
+  (`make api-types`); `make validate` fails if it is out of date. The area
+  boundary becomes a typed GeoJSON Polygon / MultiPolygon in the API.
+- Area selector, area facts, the area boundary on the map.
+- `make dev`: API plus Vite dev server (live reload, proxies `/api`).
+- `make validate` adds the TypeScript type check, ESLint, Prettier, Vitest
+  component tests and a Playwright test in headless Chromium on the
+  production build (fake API and basemap, no network): the map loads, with
+  MapLibre's worker, and follows the chosen area.
+
+### PR 3: buildings view (branch `ui-web-buildings`)
+
+- Control panel: view, colour by, sample size, new sample, residential only.
+- Buildings as coloured points, legend with explanations, popups.
+
+### PR 4: scenario view and one command (branch `ui-web-scenarios`)
+
+- Scenario selector, locations, dense-area centres and spread circles.
 - `map-routing ui`: FastAPI serves the API and the built frontend, opens the
-  browser. `make dev`: Vite dev server (live reload, proxies `/api`) plus the
-  API.
-- `make validate` adds TypeScript type check, ESLint and Vitest component
-  tests; `make web-build`.
+  browser; logging configured for the `api` and `ui` commands.
 
-### PR 3: finishing (branch `ui-finish`)
+### PR 5: finishing (branch `ui-finish`)
 
-- Playwright test in a real browser: the map loads, switching area, view and
-  colouring updates the legend and the points.
+- Playwright tests extended: switching view and colouring updates the legend
+  and the points.
 - Remove the folium maps (`scenario map`, `buildings map`, `view`), folium
-  itself and `maps.py`.
+  itself and `maps.py` (and the legend note for scenarios without dense-area
+  labels, which current scenarios always have).
 - README, PLAN.md and this plan updated.
 
 ## Later milestones plug in as views
