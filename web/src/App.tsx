@@ -5,6 +5,14 @@ import { useResource } from "./api/useResource";
 import { AreaPanel } from "./components/AreaPanel";
 import { MapView } from "./components/MapView";
 
+/**
+ * The whole page: control panel on the left, map on the right.
+ *
+ * A React component is a function that returns what to show, written as JSX (the
+ * HTML-like syntax below; the build turns it into plain function calls). React calls
+ * it again whenever its state changes and updates only the parts of the page that
+ * differ. `{condition && <p>...</p>}` shows the paragraph only when the condition holds.
+ */
 export function App() {
   const areas = useResource<AreaSummary[]>(apiPaths.areas);
   const [chosen, setChosen] = useState<string | null>(null);

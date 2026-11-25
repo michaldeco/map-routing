@@ -35,6 +35,10 @@ export function MapView({ boundary, bounds }: Props) {
   const [ready, setReady] = useState(false); // style loaded, sources exist
   const [drawn, setDrawn] = useState<Boundary | null>(null); // boundary fully rendered
 
+  // An effect is code React runs after it has updated the page; the list at its end
+  // says when to run it again (here `[]`: never, only once after the first render).
+  // The function it returns runs when the component disappears.
+  // This one creates the map in the <div> below, which exists only after rendering.
   useEffect(() => {
     if (!container.current) return;
     const map = new MapLibreMap({
@@ -56,6 +60,8 @@ export function MapView({ boundary, bounds }: Props) {
     };
   }, []);
 
+  // Runs after every render in which `ready`, `boundary` or `bounds` changed: pushes the
+  // current area into the existing map.
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map) return;

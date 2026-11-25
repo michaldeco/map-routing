@@ -33,6 +33,10 @@ export async function getJson<T>(path: string, signal?: AbortSignal): Promise<T>
   if (!response.ok) {
     throw new ApiError(response.status, await errorDetail(response));
   }
+  // `as T` tells the type checker what the JSON is (e.g. `AreaDetail`); it is not
+  // checked when the code runs. That is acceptable because T comes from the types
+  // generated from this same API (`make api-types`), and `make validate` fails if
+  // they are out of date.
   return (await response.json()) as T;
 }
 
