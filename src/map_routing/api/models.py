@@ -13,7 +13,7 @@ Spatial data is GeoJSON (RFC 7946): longitude/latitude in WGS84 degrees.
 """
 
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
@@ -35,8 +35,23 @@ class AreaSummary(BaseModel):
     has_buildings: bool = Field(description="Imputed buildings exist (buildings impute ran)")
 
 
+Position = tuple[float, float]  # [longitude, latitude]
+
+
+class PolygonGeometry(BaseModel):
+    type: Literal["Polygon"]
+    coordinates: list[list[Position]] = Field(description="Outer ring, then holes")
+
+
+class MultiPolygonGeometry(BaseModel):
+    type: Literal["MultiPolygon"]
+    coordinates: list[list[list[Position]]]
+
+
 class AreaDetail(AreaSummary):
-    boundary: dict = Field(description="Area boundary as a GeoJSON geometry")
+    boundary: Annotated[PolygonGeometry | MultiPolygonGeometry, Field(discriminator="type")] = (
+        Field(description="Area boundary as a GeoJSON geometry")
+    )
 
 
 class LegendItem(BaseModel):

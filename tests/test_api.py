@@ -88,6 +88,18 @@ def test_areas(client):
     }
     detail = client.get("/api/areas/testville").json()
     assert detail["boundary"]["type"] == "Polygon"
+    assert detail["boundary"]["coordinates"][0][0] == [22.97, 40.6]
+
+
+def test_multipolygon_area(tmp_path):
+    """Areas from place names are often several polygons (e.g. a city with islands)."""
+    from shapely.geometry import MultiPolygon
+
+    settings = Settings(data_dir=tmp_path, user_agent="test")
+    parts = MultiPolygon([box(0, 0, 1, 1), box(2, 0, 3, 1)])
+    make_area("islands", "Islands", AREA.definition, parts).save(settings.area_dir("islands"))
+    boundary = TestClient(create_app(settings)).get("/api/areas/islands").json()["boundary"]
+    assert boundary["type"] == "MultiPolygon" and len(boundary["coordinates"]) == 2
 
 
 def test_buildings_geojson_and_legend(client):
@@ -306,7 +318,15 @@ def test_buildings_cache_reloads_when_file_changes(tmp_path):
 
 def test_openapi_describes_the_models(client):
     schema = client.get("/openapi.json").json()
-    for name in ("BuildingCollection", "ScenarioDetail", "DenseAreaDetail", "Legend", "AreaDetail"):
+    for name in (
+        "BuildingCollection",
+        "ScenarioDetail",
+        "DenseAreaDetail",
+        "Legend",
+        "AreaDetail",
+        "PolygonGeometry",
+        "MultiPolygonGeometry",
+    ):
         assert name in schema["components"]["schemas"]
 
 
