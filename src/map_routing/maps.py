@@ -14,7 +14,6 @@ import contextlib
 import errno
 import functools
 import html
-import re
 import urllib.parse
 import webbrowser
 from collections.abc import Sequence
@@ -28,7 +27,25 @@ import pandas as pd
 from shapely.geometry import mapping
 
 from map_routing.area.model import Area
+from map_routing.legends import (
+    BUILDINGS_FOOTER as FOOTER,
+)
+from map_routing.legends import (
+    COLOUR_BY,
+    COLOUR_BY_SUBTITLE,
+    MISSING_COMPONENTS_NOTE,
+    SCENARIO_SUBTITLE,
+    dense_areas,
+    describe_group,
+    explain,
+    missing_components,
+    sample_buildings,
+)
+from map_routing.legends import area_number as _area_number
+from map_routing.legends import floor_band as _floor_band
 from map_routing.scenario.schema import Scenario
+
+__all__ = ["COLOUR_BY", "explain", "missing_components", "sample_buildings"]
 
 # Distinct colours for categories (colour-blind friendly "Tableau 10" palette).
 PALETTE = [
@@ -45,7 +62,7 @@ PALETTE = [
 ]
 OTHER_COLOUR = "#7f7f7f"
 # Ordered values (e.g. floor bands) get a light-to-dark scale instead of distinct colours.
-FLOOR_BANDS = {
+FLOOR_BAND_COLOURS = {
     "1–2 floors": "#fdd49e",
     "3–4 floors": "#fc8d59",
     "5–6 floors": "#e34a33",
@@ -115,85 +132,6 @@ def _legend(
     return folium.Element(page)
 
 
-FOOTER = "Each dot is one building (at its centre). Hover for a summary, click for details."
-
-# What each colouring shows, in plain language (legend subtitle).
-COLOUR_BY_SUBTITLE = {
-    "residential": "Colour: does the building count as residential (a possible customer)?",
-    "reason": "Colour: why the building counts as residential or not.",
-    "floors-source": "Colour: where the building's number of floors comes from.",
-    "floors": "Colour: number of floors, from OpenStreetMap or estimated.",
-}
-
-
-def explain(colour_by: str, value: str) -> str:
-    """One plain-language line for a legend entry."""
-    if value == "other":
-        return "less frequent values, grouped together"
-    if colour_by == "residential":
-        return {
-            "residential": "counts as a home; can appear in scenarios",
-            "excluded": "not a home (other use, too small or too large)",
-        }.get(value, "")
-    if colour_by == "reason":
-        return _explain_reason(value)
-    if colour_by == "floors-source":
-        return _explain_floors_source(value)
-    if colour_by == "floors":
-        return (
-            "no number of floors (only residential buildings get estimates)"
-            if value == "unknown"
-            else ""
-        )
-    return ""
-
-
-def _explain_reason(value: str) -> str:
-    if value.startswith("building="):
-        return f"OpenStreetMap names its type: {value.removeprefix('building=')}"
-    if value.startswith("amenity="):
-        use = value.removeprefix("amenity=").replace("_", " ")
-        return f"type not named, but used as: {use} (not a home)"
-    if m := re.fullmatch(r"footprint<(\d+(?:\.\d+)?)", value):
-        return f"type not named; ground area under {m.group(1)} m² (shed, garage, kiosk)"
-    if m := re.fullmatch(r"footprint>(\d+(?:\.\d+)?)", value):
-        return f"type not named; ground area over {m.group(1)} m² (hall, mall, factory)"
-    return {
-        "footprint ok, residential land use": (
-            "type not named; usual size, inside a residential zone"
-        ),
-        "outside residential land use": (
-            "type not named; usual size, but outside residential zones"
-        ),
-        "footprint ok": (
-            "type not named; usual size (residential zones are mapped too sparsely to use)"
-        ),
-    }.get(value, "")
-
-
-def _explain_floors_source(value: str) -> str:
-    if m := re.fullmatch(r"neighbours_(\d+)m", value):
-        return (
-            "estimated: typical floors of nearby buildings with known floors "
-            f"(within {m.group(1)} m)"
-        )
-    return {
-        "osm": "known: tagged in OpenStreetMap",
-        "height": "estimated from the tagged height (about 3 m per floor)",
-        "area_median": "estimated: no known buildings nearby, so the area's typical value",
-        "area_distribution": (
-            "estimated: no known buildings nearby, so a random value typical for the area"
-        ),
-        "default_median": (
-            "estimated: too few known buildings in the area, so a configured default"
-        ),
-        "default_distribution": (
-            "estimated: too few known buildings in the area, so a random default"
-        ),
-        "none": "no estimate (not a residential building)",
-    }.get(value, "")
-
-
 def _popup(fields: dict[str, object]) -> str:
     rows = "".join(
         f"<tr><th style='text-align:left;padding-right:8px'>{html.escape(str(k))}</th>"
@@ -202,11 +140,6 @@ def _popup(fields: dict[str, object]) -> str:
         if v is not None and not (isinstance(v, float) and np.isnan(v))
     )
     return f"<table style='font:12px sans-serif'>{rows}</table>"
-
-
-def _area_number(group: str) -> int:
-    m = re.fullmatch(r"area(\d+)", group)
-    return int(m.group(1)) if m else 10**9
 
 
 def group_colour(i: int) -> str:
@@ -230,15 +163,15 @@ def scenario_map(scenario: Scenario, area: Area) -> folium.Map:
     }
 
     # Centres first, so the buildings are drawn (and receive the mouse) on top.
-    centres = scenario.meta.parameters.get("centres", [])
+    centres = dense_areas(scenario)
     if centres:
         layer = folium.FeatureGroup(name="Dense area centres and spread")
-        for i, c in enumerate(centres):
-            colour = colours.get(f"area{i + 1}", OTHER_COLOUR)
+        for c in centres:
+            colour = colours.get(c.component, OTHER_COLOUR)
             for k in (1, 2):
                 folium.Circle(
-                    [c["lat"], c["lon"]],
-                    radius=k * c["sigma_m"],
+                    [c.lat, c.lon],
+                    radius=k * c.sigma_m,
                     color=colour,
                     weight=2 if k == 1 else 1,
                     fill=False,
@@ -249,10 +182,10 @@ def scenario_map(scenario: Scenario, area: Area) -> folium.Map:
                     interactive=False,
                 ).add_to(layer)
             folium.Marker(
-                [c["lat"], c["lon"]],
+                [c.lat, c.lon],
                 tooltip=(
-                    f"area{i + 1}: about {c['weight']:.0%} of buildings, "
-                    f"typical spread {c['sigma_m']:,.0f} m"
+                    f"{c.component}: about {c.weight:.0%} of buildings, "
+                    f"typical spread {c.sigma_m:,.0f} m"
                 ),
             ).add_to(layer)
         layer.add_to(m)
@@ -289,60 +222,12 @@ def scenario_map(scenario: Scenario, area: Area) -> folium.Map:
         f"{scenario.meta.name}: {len(scenario.locations):,} locations, "
         f"{scenario.visits_per_week:,} visits/week"
     )
-    centres = scenario.meta.parameters.get("centres", [])
-
-    def describe(group: str) -> str:
-        if group == "outlier":
-            return "picked at random from all residential buildings, anywhere in the area"
-        k = _area_number(group)
-        if k <= len(centres):
-            c = centres[k - 1]
-            return (
-                f"picked near its centre (pin), about {c['weight']:.0%} of buildings; "
-                f"inner circle {c['sigma_m']:,.0f} m = typical spread, "
-                f"outer circle {2 * c['sigma_m']:,.0f} m"
-            )
-        return ""
-
-    items = [(n, colours[n], len(groups[n]), describe(n)) for n in names]
-    note = (
-        "This scenario has no dense-area labels (generated before they were recorded); "
-        "regenerate it with `map-routing scenario generate` to colour the dense areas."
-        if missing_components(scenario)
-        else ""
-    )
-    subtitle = (
-        "Colour: how the generator picked the building. Dot size: visits per week. "
-        "Dense areas have no edge: picks get rarer with distance from the centre, so "
-        "some lie outside the circles."
-    )
+    items = [(n, colours[n], len(groups[n]), describe_group(n, centres)) for n in names]
+    note = MISSING_COMPONENTS_NOTE if missing_components(scenario) else ""
+    subtitle = SCENARIO_SUBTITLE
     m.get_root().html.add_child(_legend(title, items, subtitle=subtitle, note=note, footer=FOOTER))
     folium.LayerControl(collapsed=False).add_to(m)
     return m
-
-
-def missing_components(scenario: Scenario) -> bool:
-    """A synthetic scenario (it has dense-area centres) whose locations lack labels."""
-    has_centres = bool(scenario.meta.parameters.get("centres"))
-    return has_centres and all(loc.component is None for loc in scenario.locations)
-
-
-def sample_buildings(
-    buildings: gpd.GeoDataFrame, sample: int | None, seed: int
-) -> tuple[gpd.GeoDataFrame, int]:
-    """A random sample of at most `sample` buildings (None: all). Returns it and the total."""
-    total = len(buildings)
-    if sample is None or sample >= total:
-        return buildings, total
-    return buildings.sample(n=sample, random_state=seed), total
-
-
-COLOUR_BY = {
-    "residential": "residential",
-    "reason": "residential_reason",
-    "floors-source": "floors_source",
-    "floors": "floors",
-}
 
 
 def buildings_map(
@@ -361,7 +246,7 @@ def buildings_map(
     column = COLOUR_BY[colour_by]
     if colour_by == "floors":
         values = shown.floors.map(lambda f: "unknown" if pd.isna(f) else _floor_band(f))
-        colours = FLOOR_BANDS
+        colours = FLOOR_BAND_COLOURS
     elif colour_by == "residential":
         values = shown.residential.map({True: "residential", False: "excluded"})
     else:
@@ -395,7 +280,7 @@ def buildings_map(
 
     counts = values.value_counts()
     if colour_by == "floors":  # natural order, not by frequency
-        counts = counts.reindex([b for b in FLOOR_BANDS if b in counts.index])
+        counts = counts.reindex([b for b in FLOOR_BAND_COLOURS if b in counts.index])
     if colour_by == "floors":  # every band, incl. "unknown", keeps its own row
         top = [(v, colours[v], int(n), explain(colour_by, v)) for v, n in counts.items()]
     else:
@@ -419,19 +304,6 @@ def buildings_map(
     )
     m.get_root().html.add_child(legend)
     return m
-
-
-def _floor_band(floors: float) -> str:
-    floors = round(floors)  # imputed floors are whole numbers already; be safe for others
-    if floors <= 2:
-        return "1–2 floors"
-    if floors <= 4:
-        return "3–4 floors"
-    if floors <= 6:
-        return "5–6 floors"
-    if floors <= 9:
-        return "7–9 floors"
-    return "10+ floors"
 
 
 def make_server(file: Path, port: int = 8765) -> tuple[ThreadingHTTPServer, str]:

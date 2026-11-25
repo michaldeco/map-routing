@@ -35,6 +35,14 @@ uv run map-routing buildings map thessaloniki --colour-by floors --residential-o
 Building maps show a random sample of 5,000 buildings by default (`--sample N`,
 or `--all`); colour them by `residential`, `reason`, `floors-source` or `floors`.
 
+## API
+
+`map-routing api` (or `make api`) runs a read-only API on http://127.0.0.1:8000
+for the upcoming web app: areas, imputed buildings (sampled, with legend
+categories and plain-language explanations) and scenarios, as GeoJSON. Every
+endpoint can be tried at http://127.0.0.1:8000/docs. See
+[docs/UI_PLAN.md](docs/UI_PLAN.md).
+
 Place names are resolved with Nominatim; set `MAP_ROUTING_USER_AGENT` to
 identify yourself if you use it a lot. Data lives in `./data` (override with
 `MAP_ROUTING_DATA_DIR`).

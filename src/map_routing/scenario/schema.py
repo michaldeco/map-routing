@@ -81,6 +81,36 @@ class Workforce(BaseModel):
     start: Literal["first_visit"] = "first_visit"
 
 
+class DenseArea(BaseModel):
+    """One dense area of a synthetic scenario: its buildings were picked around the
+    centre, with weights falling off like a bell curve of width `sigma_m`."""
+
+    component: str = Field(pattern=r"^area\d+$", description="area1, area2, ...")
+    lon: float = Field(ge=-180, le=180)
+    lat: float = Field(ge=-90, le=90)
+    sigma_m: float = Field(gt=0, description="Typical spread in metres")
+    weight: float = Field(ge=0, le=1, description="Intended share of the buildings")
+
+
+class SyntheticInfo(BaseModel):
+    """How a synthetic scenario was generated (absent for imported scenarios)."""
+
+    size: Literal["small", "medium", "full"]
+    layout: Literal["mixed", "compact"]
+    load: Literal["moderate", "high"]
+    dense_areas: list[DenseArea]
+    outlier_weight: float = Field(ge=0, le=1, description="Share of buildings picked anywhere")
+    component_counts: dict[str, int] = Field(description="Buildings per dense area / outlier")
+    pool_size: int = Field(ge=0, description="Residential buildings the sample was drawn from")
+    # The full GeneratorConfig, to reproduce the scenario exactly. Kept as plain data:
+    # the format must not depend on the generator module (which depends on the format).
+    # Read it back with `GeneratorConfig.model_validate(info.generator)`.
+    generator: dict = Field(default_factory=dict)
+
+    def dense_area(self, component: str) -> DenseArea | None:
+        return next((d for d in self.dense_areas if d.component == component), None)
+
+
 class ScenarioMeta(BaseModel):
     name: str
     area_slug: str
@@ -88,8 +118,14 @@ class ScenarioMeta(BaseModel):
     source: Literal["synthetic", "import"]
     created: datetime
     seed: int | None = None
-    parameters: dict = Field(default_factory=dict)
+    synthetic: SyntheticInfo | None = None
     workforce: Workforce = Field(default_factory=Workforce)
+
+    @model_validator(mode="after")
+    def _synthetic_info_matches_source(self) -> ScenarioMeta:
+        if (self.source == "synthetic") != (self.synthetic is not None):
+            raise ValueError("synthetic scenarios need `synthetic` info, imported ones must not")
+        return self
 
 
 class Scenario(BaseModel):

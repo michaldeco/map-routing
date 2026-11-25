@@ -17,7 +17,15 @@ from scipy.spatial import cKDTree
 
 from map_routing.area.model import Area
 from map_routing.geo import WGS84, utm_crs_for
-from map_routing.scenario.schema import WEEKDAYS, Location, Scenario, ScenarioMeta, Workforce
+from map_routing.scenario.schema import (
+    WEEKDAYS,
+    DenseArea,
+    Location,
+    Scenario,
+    ScenarioMeta,
+    SyntheticInfo,
+    Workforce,
+)
 
 SIZES = {"small": 100, "medium": 300, "full": 1000}
 LOADS = {
@@ -107,7 +115,7 @@ def sample_order(
     else:
         weights, sigmas = cfg.component_weights, cfg.component_sigma_m
         centres = _choose_centres(rng, xy, density, cfg.n_centres, cfg.min_centre_distance_m)
-    outlier_weight = max(0.0, 1.0 - sum(weights))
+    outlier_weight = round(max(0.0, 1.0 - sum(weights)), 6)  # no float noise in the file
 
     orders = [
         _gaussian_order(rng, ((xy - xy[c]) ** 2).sum(axis=1), sigma)
@@ -129,11 +137,17 @@ def sample_order(
         used[idx] = True
         chosen.append(idx)
         labels.append(names[k])
-    centre_info = [
-        {"lon": float(pool.lon.iloc[c]), "lat": float(pool.lat.iloc[c]), "sigma_m": s, "weight": w}
-        for c, s, w in zip(centres, sigmas, weights, strict=True)
+    dense_areas = [
+        DenseArea(
+            component=names[i],
+            lon=float(pool.lon.iloc[c]),
+            lat=float(pool.lat.iloc[c]),
+            sigma_m=s,
+            weight=w,
+        )
+        for i, (c, s, w) in enumerate(zip(centres, sigmas, weights, strict=True))
     ]
-    return np.array(chosen), labels, {"centres": centre_info, "outlier_weight": outlier_weight}
+    return np.array(chosen), labels, (dense_areas, outlier_weight)
 
 
 def demand(rng: np.random.Generator, floors: np.ndarray, cfg: GeneratorConfig):
@@ -176,7 +190,7 @@ def generate(area_dir, area: Area, size: str, seed: int, cfg: GeneratorConfig) -
     # Always draw the longest possible ordered sample (up to `full`), so smaller sizes
     # are prefixes of larger ones, also in areas with fewer buildings than `full`.
     n_ordered = min(SIZES["full"], len(pool))
-    order, labels, layout_info = sample_order(pool, area, cfg, rng, n_ordered)
+    order, labels, (dense_areas, outlier_weight) = sample_order(pool, area, cfg, rng, n_ordered)
     rows = pool.iloc[order].reset_index(drop=True)
     visits, duration, days = demand(rng, rows.floors.to_numpy(dtype=float), cfg)
 
@@ -206,13 +220,16 @@ def generate(area_dir, area: Area, size: str, seed: int, cfg: GeneratorConfig) -
         source="synthetic",
         created=datetime.now(UTC).replace(microsecond=0),
         seed=seed,
-        parameters={
-            "size": size,
-            "generator": cfg.model_dump(mode="json"),
-            **layout_info,
-            "component_counts": component_counts,
-            "pool_size": len(pool),
-        },
+        synthetic=SyntheticInfo(
+            size=size,
+            layout=cfg.layout,
+            load=cfg.load,
+            dense_areas=dense_areas,
+            outlier_weight=outlier_weight,
+            component_counts=component_counts,
+            pool_size=len(pool),
+            generator=cfg.model_dump(mode="json"),
+        ),
         workforce=Workforce(shift_min=cfg.shift_min),
     )
     return Scenario(meta=meta, locations=locations)

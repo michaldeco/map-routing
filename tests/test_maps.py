@@ -19,7 +19,13 @@ from map_routing.maps import (
     sample_buildings,
     scenario_map,
 )
-from map_routing.scenario.schema import Location, Scenario, ScenarioMeta
+from map_routing.scenario.schema import (
+    DenseArea,
+    Location,
+    Scenario,
+    ScenarioMeta,
+    SyntheticInfo,
+)
 
 AREA = make_area(
     "t", "Testville", AreaDefinition(kind="bbox", value="x"), box(22.9, 40.6, 23.0, 40.7)
@@ -43,12 +49,18 @@ def scenario():
         area_slug="t",
         source="synthetic",
         created=datetime(2026, 11, 23, tzinfo=UTC),
-        parameters={
-            "centres": [
-                {"lon": 22.95, "lat": 40.62, "sigma_m": 700, "weight": 0.5},
-                {"lon": 22.96, "lat": 40.63, "sigma_m": 500, "weight": 0.3},
-            ]
-        },
+        synthetic=SyntheticInfo(
+            size="small",
+            layout="mixed",
+            load="moderate",
+            dense_areas=[
+                DenseArea(component="area1", lon=22.95, lat=40.62, sigma_m=700, weight=0.5),
+                DenseArea(component="area2", lon=22.96, lat=40.63, sigma_m=500, weight=0.3),
+            ],
+            outlier_weight=0.2,
+            component_counts={"area1": 3, "area2": 3, "outlier": 3},
+            pool_size=100,
+        ),
     )
     return Scenario(meta=meta, locations=locs)
 
