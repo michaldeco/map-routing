@@ -1,0 +1,15 @@
+# pnpm settings for web/ (a single package, no workspace members).
+
+# Refuse package versions published less than 14 days ago (in minutes): most
+# malicious releases are found and removed within days.
+minimumReleaseAge: 20160
+
+# `pnpm add x` records the exact version, never a ^range.
+saveExact: true
+
+# Refuse to install with a Node version outside "engines" in package.json.
+engineStrict: true
+
+# Install scripts of dependencies never run (pnpm's default); a package that
+# needs its script must be listed here explicitly.
+onlyBuiltDependencies: []
