@@ -7,7 +7,8 @@ import pytest
 from fastapi.testclient import TestClient
 from shapely.geometry import box
 
-from map_routing.api.app import MAX_SAMPLE, MAX_SEED, create_app
+from map_routing.api.app import create_app
+from map_routing.api.areas import MAX_SAMPLE, MAX_SEED
 from map_routing.area.model import AreaDefinition, make_area
 from map_routing.geo import WGS84
 from map_routing.scenario.io import write_scenario
@@ -307,6 +308,32 @@ def test_openapi_describes_the_models(client):
     schema = client.get("/openapi.json").json()
     for name in ("BuildingCollection", "ScenarioDetail", "DenseAreaDetail", "Legend", "AreaDetail"):
         assert name in schema["components"]["schemas"]
+
+
+def test_endpoints(client):
+    """The URLs the web app uses; the store is injected, never a request parameter."""
+    schema = client.get("/openapi.json").json()
+    assert sorted(schema["paths"]) == [
+        "/api/areas",
+        "/api/areas/{slug}",
+        "/api/areas/{slug}/buildings",
+        "/api/health",
+        "/api/scenarios",
+        "/api/scenarios/{name}",
+    ]
+    parameters = [
+        p["name"]
+        for path in schema["paths"].values()
+        for operation in path.values()
+        for p in operation.get("parameters", [])
+    ]
+    assert "store" not in parameters
+
+
+def test_apps_with_different_settings_do_not_share_data(client, tmp_path):
+    other = TestClient(create_app(Settings(data_dir=tmp_path / "other", user_agent="test")))
+    assert other.get("/api/areas").json() == []
+    assert [a["slug"] for a in client.get("/api/areas").json()] == ["empty", "testville"]
 
 
 def test_api_models_never_reuse_core_names():

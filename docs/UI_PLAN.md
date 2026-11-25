@@ -71,7 +71,10 @@ Each PR stands alone: reviewable, working and tested.
 - `map_routing/legends.py`: plain-language legend content (subtitles,
   explanations, floor bands, scenario group descriptions) moved out of
   `maps.py`, without colours; `maps.py` keeps working on top of it.
-- `map_routing/api/`: `create_app(settings)`, Pydantic response models.
+- `map_routing/api/`: one router module per resource (`areas.py`,
+  `scenarios.py`); `create_app(settings)` only assembles them, puts the data
+  store on `app.state` and endpoints receive it as a dependency
+  (`dependencies.py`); Pydantic response models in `models.py`.
   Endpoints:
   - `GET /api/health`
   - `GET /api/areas`: slug, name, data date, bounds, whether buildings exist
@@ -112,5 +115,6 @@ Each PR stands alone: reviewable, working and tested.
 ## Later milestones plug in as views
 
 M3 clusters, M4 weekdays, M5 routes per cleaner and day, M6 workforce, M7
-before/after reoptimization: each adds endpoints and a view in the same app.
+before/after reoptimization: each adds a router module with its endpoints and a view in
+the same app.
 M9's report becomes a static build of the same frontend with embedded data.
