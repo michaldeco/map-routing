@@ -4,14 +4,15 @@ Run it with `map-routing api` (development) or `map-routing ui` (later, with the
 web app). It binds to 127.0.0.1 only; there is no authentication.
 """
 
-import math
+import logging
 from typing import Annotated
 
+import pandas as pd
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import JSONResponse
 
 from map_routing import __version__, legends
-from map_routing.api.data import DataStore, NotFound
+from map_routing.api.data import BrokenData, DataStore, NotFound
 from map_routing.api.models import (
     AreaDetail,
     AreaSummary,
@@ -34,6 +35,9 @@ from map_routing.scenario.schema import ScenarioMeta
 from map_routing.settings import Settings, load_settings
 
 MAX_SAMPLE = 50_000  # more points than this make the browser slow; use `all` deliberately
+MAX_SEED = 2**32 - 1  # numpy's random generators accept seeds 0 .. 2**32 - 1
+
+log = logging.getLogger(__name__)
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -48,13 +52,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def not_found(_: Request, exc: NotFound) -> JSONResponse:
         return JSONResponse(status_code=404, content={"detail": str(exc)})
 
+    @app.exception_handler(BrokenData)
+    async def broken_data(_: Request, exc: BrokenData) -> JSONResponse:
+        # A server-side data problem (500), but with a message that says what to fix.
+        return JSONResponse(status_code=500, content={"detail": str(exc)})
+
     @app.get("/api/health")
     def health() -> dict[str, str]:
         return {"status": "ok", "version": __version__}
 
     @app.get("/api/areas")
     def list_areas() -> list[AreaSummary]:
-        return [_area_summary(store, store.area(slug)) for slug in store.area_slugs()]
+        """Every readable area; a broken one is skipped (and logged) so the others
+        still show."""
+        summaries = []
+        for slug in store.area_slugs():
+            try:
+                summaries.append(_area_summary(store, store.area(slug)))
+            except BrokenData as exc:
+                log.warning("skipping %s", exc)
+        return summaries
 
     @app.get("/api/areas/{slug}")
     def get_area(slug: str) -> AreaDetail:
@@ -66,7 +83,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         slug: str,
         colour_by: ColourBy = "reason",
         sample: Annotated[int, Query(ge=1, le=MAX_SAMPLE)] = 5000,
-        seed: int = 0,
+        seed: Annotated[int, Query(ge=0, le=MAX_SEED)] = 0,
         residential_only: bool = False,
         all: Annotated[
             bool, Query(description="Every building, no sampling")
@@ -122,8 +139,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def list_scenarios(
         area: Annotated[str | None, Query(description="Only this area")] = None,
     ) -> list[ScenarioSummary]:
-        summaries = [_listed_summary(store.scenario_meta(d)) for d in store.scenario_dirs()]
-        return [s for s in summaries if area is None or s.area_slug == area]
+        """Every readable scenario; a broken one is skipped (and logged) so the others
+        still show."""
+        summaries = []
+        for directory in store.scenario_dirs():
+            try:
+                meta, raw = store.scenario_meta(directory)
+            except BrokenData as exc:
+                log.warning("skipping %s", exc)
+                continue
+            if area is None or meta.area_slug == area:
+                summaries.append(
+                    _scenario_summary(meta, raw.get("locations", 0), raw.get("visits_per_week", 0))
+                )
+        return summaries
 
     @app.get("/api/scenarios/{name}")
     def get_scenario(name: str) -> ScenarioDetail:
@@ -211,21 +240,11 @@ def _scenario_summary(meta: ScenarioMeta, locations: int, visits: int) -> Scenar
     )
 
 
-def _listed_summary(raw: dict) -> ScenarioSummary:
-    """Summary from scenario.json alone (fast listing, no CSV); the file also stores
-    the number of locations and visits."""
-    meta = ScenarioMeta.model_validate(raw)
-    return _scenario_summary(meta, raw.get("locations", 0), raw.get("visits_per_week", 0))
-
-
 def _text(value: object) -> str | None:
-    if value is None or (isinstance(value, float) and math.isnan(value)):
-        return None
-    return str(value)
+    """A text cell, or None if missing (None, NaN, pd.NA, ...)."""
+    return None if pd.isna(value) else str(value)
 
 
 def _number(value: object) -> float | None:
-    if value is None:
-        return None
-    number = float(value)
-    return None if math.isnan(number) else number
+    """A numeric cell, or None if missing (None, NaN, pd.NA, ...)."""
+    return None if pd.isna(value) else float(value)

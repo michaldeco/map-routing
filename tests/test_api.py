@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from shapely.geometry import box
 
-from map_routing.api.app import MAX_SAMPLE, create_app
+from map_routing.api.app import MAX_SAMPLE, MAX_SEED, create_app
 from map_routing.area.model import AreaDefinition, make_area
 from map_routing.geo import WGS84
 from map_routing.scenario.io import write_scenario
@@ -151,6 +151,8 @@ def test_json_has_no_nan(client):
         {"colour_by": "height"},
         {"sample": 0},
         {"sample": MAX_SAMPLE + 1},
+        {"sample": 300, "seed": -1},
+        {"sample": 300, "seed": MAX_SEED + 1},
     ],
 )
 def test_bad_parameters(client, params):
@@ -189,6 +191,100 @@ def test_scenarios(client):
     props = data["features"][0]["properties"]
     assert props["group"].startswith("area") or props["group"] == "outlier"
     assert isinstance(props["allowed_days"], list)
+
+
+def test_largest_seed_is_accepted(client):
+    params = {"sample": 300, "seed": MAX_SEED}
+    assert client.get("/api/areas/testville/buildings", params=params).status_code == 200
+
+
+def broken_data_client(tmp_path):
+    """The `client` data plus a broken area and a broken scenario next to them."""
+    settings = Settings(data_dir=tmp_path, user_agent="test")
+    area_dir = settings.area_dir("testville")
+    AREA.save(area_dir)
+    imputed_buildings().to_parquet(area_dir / "buildings.parquet")
+    scenario = generate(area_dir, AREA, "small", 1, GeneratorConfig())
+    write_scenario(scenario, settings.scenarios_dir / scenario.meta.name)
+    broken_area = settings.area_dir("broken")
+    broken_area.mkdir(parents=True)
+    (broken_area / "area.json").write_text("{not json")
+    broken_scenario = settings.scenarios_dir / "testville-broken"
+    broken_scenario.mkdir(parents=True)
+    (broken_scenario / "scenario.json").write_text('{"name": "testville-broken"}')
+    return TestClient(create_app(settings), raise_server_exceptions=False)
+
+
+def test_broken_files_are_skipped_in_listings(tmp_path):
+    client = broken_data_client(tmp_path)
+    areas = client.get("/api/areas")
+    assert areas.status_code == 200 and [a["slug"] for a in areas.json()] == ["testville"]
+    scenarios = client.get("/api/scenarios")
+    assert scenarios.status_code == 200
+    assert [s["name"] for s in scenarios.json()] == ["testville-small-s1"]
+
+
+@pytest.mark.parametrize(
+    "url, hint",
+    [
+        ("/api/areas/broken", "area define"),
+        ("/api/scenarios/testville-broken", "scenario generate"),
+    ],
+)
+def test_broken_file_gives_a_clear_error(tmp_path, url, hint):
+    r = broken_data_client(tmp_path).get(url)
+    assert r.status_code == 500 and hint in r.json()["detail"]
+
+
+def test_buildings_of_one_area_load_without_blocking_another(tmp_path, monkeypatch):
+    """Loading a large area (slow parquet read) must not hold up a cached area."""
+    import threading
+
+    from map_routing.api import data
+
+    settings = Settings(data_dir=tmp_path, user_agent="test")
+    for slug in ("fast", "slow"):
+        make_area(slug, slug, AREA.definition, AREA.geometry).save(settings.area_dir(slug))
+        imputed_buildings(10).to_parquet(settings.area_dir(slug) / "buildings.parquet")
+    store = data.DataStore(settings)
+    store.buildings("fast")  # cached
+
+    loading, release = threading.Event(), threading.Event()
+    read_parquet = data.gpd.read_parquet
+
+    def slow_read(path, *args, **kwargs):
+        loading.set()
+        release.wait(timeout=10)
+        return read_parquet(path, *args, **kwargs)
+
+    monkeypatch.setattr(data.gpd, "read_parquet", slow_read)
+    slow = threading.Thread(target=store.buildings, args=("slow",))
+    slow.start()
+    assert loading.wait(timeout=5)
+    try:
+        fast = threading.Thread(target=store.buildings, args=("fast",))
+        fast.start()
+        fast.join(timeout=2)
+        assert not fast.is_alive(), "the cached area waited for another area's load"
+    finally:
+        release.set()
+        slow.join()
+
+
+def test_nullable_columns_are_served_as_null(tmp_path):
+    """Missing values stored as pd.NA (nullable dtypes) become JSON null, not "<NA>"."""
+    settings = Settings(data_dir=tmp_path, user_agent="test")
+    area_dir = settings.area_dir("testville")
+    AREA.save(area_dir)
+    b = imputed_buildings(50)
+    b["floors"] = b["floors"].astype("Float64")
+    b["address"] = b["address"].astype("string")
+    b.to_parquet(area_dir / "buildings.parquet")
+    r = TestClient(create_app(settings)).get("/api/areas/testville/buildings", params={"all": True})
+    assert r.status_code == 200
+    props = [f["properties"] for f in r.json()["features"]]
+    assert all(p["address"] is None for p in props)
+    assert None in [p["floors"] for p in props]
 
 
 def test_buildings_cache_reloads_when_file_changes(tmp_path):
