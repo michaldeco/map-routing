@@ -1,6 +1,5 @@
-import { render } from "@testing-library/react";
+import { act, render } from "@testing-library/react";
 import { setWorkerUrl } from "maplibre-gl";
-import { act } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { Boundary } from "../api/client";
