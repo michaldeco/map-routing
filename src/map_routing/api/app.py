@@ -7,7 +7,7 @@ web app). It binds to 127.0.0.1 only; there is no authentication.
 import math
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, Query, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.responses import JSONResponse
 
 from map_routing import __version__, legends
@@ -48,28 +48,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def not_found(_: Request, exc: NotFound) -> JSONResponse:
         return JSONResponse(status_code=404, content={"detail": str(exc)})
 
-    def get_store() -> DataStore:
-        return store
-
-    Store = Annotated[DataStore, Depends(get_store)]
-
     @app.get("/api/health")
     def health() -> dict[str, str]:
         return {"status": "ok", "version": __version__}
 
     @app.get("/api/areas")
-    def list_areas(store: Store) -> list[AreaSummary]:
+    def list_areas() -> list[AreaSummary]:
         return [_area_summary(store, store.area(slug)) for slug in store.area_slugs()]
 
     @app.get("/api/areas/{slug}")
-    def get_area(slug: str, store: Store) -> AreaDetail:
+    def get_area(slug: str) -> AreaDetail:
         area = store.area(slug)
         return AreaDetail(**_area_summary(store, area).model_dump(), boundary=area.boundary)
 
     @app.get("/api/areas/{slug}/buildings")
     def get_buildings(
         slug: str,
-        store: Store,
         colour_by: ColourBy = "reason",
         sample: Annotated[int, Query(ge=1, le=MAX_SAMPLE)] = 5000,
         seed: int = 0,
@@ -126,13 +120,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/api/scenarios")
     def list_scenarios(
-        store: Store, area: Annotated[str | None, Query(description="Only this area")] = None
+        area: Annotated[str | None, Query(description="Only this area")] = None,
     ) -> list[ScenarioSummary]:
         summaries = [_listed_summary(store.scenario_meta(d)) for d in store.scenario_dirs()]
         return [s for s in summaries if area is None or s.area_slug == area]
 
     @app.get("/api/scenarios/{name}")
-    def get_scenario(name: str, store: Store) -> ScenarioDetail:
+    def get_scenario(name: str) -> ScenarioDetail:
         """A scenario's locations as points, with its dense-area centres and legend."""
         scenario = store.scenario(name)
         dense_areas = legends.dense_areas(scenario)
