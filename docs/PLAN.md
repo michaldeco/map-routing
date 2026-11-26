@@ -82,6 +82,22 @@ command, inputs and outputs, so each can be tested and rerun alone.
   with spatially separated test areas, compare with the rules, and consider
   weighting or modelling where tags are present. Rules first; the classifier
   is a separate, swappable imputation rule.
+- Lightweight alternative (decide later whether it is enough or to go
+  straight to the classifier): estimate the minimum footprint per area
+  instead of the fixed default (50 m², lowered from 150 m² on 2026-11-26
+  because 150 excluded about a third of tagged homes). Rule: a low
+  percentile of tagged homes' footprints (p2: about 98 % of homes kept),
+  clamped to 30–100 m², with the 50 m² default when an area has fewer than
+  ~200 tagged homes; `quality.json` records the threshold and its source.
+  On 2026-11-26 data, p2 = 61 m² (Thessaloniki), 68 m² (Petržalka). Limits:
+  - It sets home recall only; precision (sheds and garages let in) cannot
+    be measured on tagged buildings, which are mostly homes (Thessaloniki:
+    11,079 tagged homes, 52 tagged sheds/garages/kiosks), so tuning F1 on
+    them picks a meaningless 10 m². Measuring precision needs a
+    hand-checked sample of untyped buildings (e.g. 200 on aerial imagery),
+    as does evaluating the classifier.
+  - One value per area mixes city and village; a local estimate (nearby
+    tagged homes, like the floors rule) would handle that.
 
 #### M1c Scenario format (the engine's only input)
 
