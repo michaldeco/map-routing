@@ -168,7 +168,8 @@ Move the existing `data/raw/greece-latest.osm.pbf` into `data/cache/geofabrik/`
   1. Residential: tagged type if residential-like (`apartments`, `residential`,
      `house`, …) -> `osm`; non-residential tags or other building values
      (industrial, school, church, retail, commercial, office, garage, roof, …)
-     -> excluded (`osm`); untagged `yes`: footprint between min (default 150 m²)
+     -> excluded (`osm`); untagged `yes`: footprint between min (default 50 m²; was 150 m², lowered in
+     November 2026 because it excluded about a third of tagged homes)
      and max thresholds and, if enabled, inside `landuse=residential` (spatial
      join) -> `rule:footprint_landuse`.
   2. Floors: `building:levels` -> `osm`; `height`/3 m -> `height`; median of

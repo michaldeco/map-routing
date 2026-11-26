@@ -62,7 +62,13 @@ class ImputationConfig(BaseModel):
         "shelter",
         "car_wash",
     ]
-    min_footprint_m2: float = 150.0
+    # Ground area (footprint) below which an untyped building is not a home. 50 m² was
+    # chosen from buildings whose type is tagged (Thessaloniki and Petržalka, 2026-11-26):
+    # tagged homes below 50 m²: 1.2 % (below 150 m²: 31 %; family houses have a median
+    # of 80-110 m², small apartment blocks often under 150 m²); tagged garages, sheds,
+    # kiosks and huts below 50 m²: 91 % (typically 20-30 m²). A flat's size does not
+    # matter here: flats share one building whose footprint holds all of them.
+    min_footprint_m2: float = 50.0
     max_footprint_m2: float = 5000.0
     # "auto": use residential land use only where it is mapped widely enough.
     landuse_mode: Literal["auto", "require", "ignore"] = "auto"

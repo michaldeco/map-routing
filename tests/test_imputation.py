@@ -80,7 +80,7 @@ def test_residential_rules_with_landuse():
             building(0, 0, "apartments"),
             building(50, 0, "school"),
             building(100, 0, "yes", amenity="place_of_worship"),
-            building(150, 0, "yes", footprint=60),
+            building(150, 0, "yes", footprint=30),
             building(200, 0, "yes", footprint=9000),
             building(250, 0, "yes"),  # inside land use
             building(2000, 0, "yes"),  # outside land use
@@ -92,10 +92,19 @@ def test_residential_rules_with_landuse():
     reasons = dict(zip(out.index, out.residential_reason, strict=True))
     assert out.residential.tolist() == [True, False, False, False, False, True, False, True]
     assert reasons[0] == "building=apartments" and reasons[2] == "amenity=place_of_worship"
-    assert reasons[3] == "footprint<150" and reasons[4] == "footprint>5000"
+    assert reasons[3] == "footprint<50" and reasons[4] == "footprint>5000"
     assert reasons[6] == "outside residential land use"
     assert out.residential_source.tolist()[:3] == ["osm", "osm", "osm"]
     assert q["notes"]["landuse_used"] is True
+
+
+def test_small_untyped_house_counts_as_residential():
+    """A family house often covers 80-110 m² of ground; only sheds, garages and kiosks
+    (typically 20-30 m²) are too small to be homes."""
+    b = gdf([building(0, 0, "yes", footprint=80), building(50, 0, "yes", footprint=25)])
+    out, _ = impute(b, context(), AREA, ImputationConfig(landuse_mode="ignore"))
+    assert out.residential.tolist() == [True, False]
+    assert out.residential_reason.tolist()[1] == "footprint<50"
 
 
 def test_landuse_ignored_when_poorly_mapped():
