@@ -38,6 +38,17 @@ export function App() {
     slug && hasBuildings ? apiPaths.buildings(slug, options) : null,
   );
 
+  // While new buildings load (another colouring or sample), keep showing the last
+  // ones of the same area instead of an empty map: with all buildings, a request takes
+  // seconds. Never another area's buildings, and nothing old after a failed request.
+  const [last, setLast] = useState<{ slug: string; data: BuildingCollection } | null>(null);
+  if (slug && buildings.data && buildings.data !== last?.data) {
+    // Updating state while rendering is React's way to remember a value from an
+    // earlier render; React re-renders at once, before anything is shown.
+    setLast({ slug, data: buildings.data });
+  }
+  const shown = buildings.data ?? (buildings.loading && last?.slug === slug ? last.data : null);
+
   return (
     <div className="app">
       <aside className="panel">
@@ -54,14 +65,14 @@ export function App() {
             <BuildingControls
               options={options}
               onChange={setOptions}
-              sampled={buildings.data?.sampled ?? true}
+              sampled={shown?.sampled ?? true}
             />
             {buildings.loading && <p>Loading buildings…</p>}
             {buildings.error && <p role="alert">Cannot load buildings: {buildings.error}</p>}
-            {buildings.data && (
+            {shown && (
               <Legend
-                legend={buildings.data.legend}
-                colours={categoryColours(buildings.data.colour_by, buildings.data.legend.items)}
+                legend={shown.legend}
+                colours={categoryColours(shown.colour_by, shown.legend.items)}
               />
             )}
           </>
@@ -71,7 +82,7 @@ export function App() {
         <MapView
           boundary={area.data?.boundary ?? null}
           bounds={area.data?.bounds ?? null}
-          buildings={buildings.data ?? null}
+          buildings={shown}
         />
       </main>
     </div>

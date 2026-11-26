@@ -66,12 +66,20 @@ class FakeMap {
   }
 }
 
-// Popups record their content; `popups` lists those opened on the map.
+// Popups record their content and whether they are open; `popups` lists every popup
+// created, in order.
 const popups: FakePopup[] = [];
 
 class FakePopup {
   text = "";
   content: HTMLElement | null = null;
+  isOpen = false;
+  closeHandlers: (() => void)[] = [];
+
+  constructor() {
+    popups.push(this);
+  }
+
   setLngLat = vi.fn(() => this);
   setText(text: string) {
     this.text = text;
@@ -82,10 +90,18 @@ class FakePopup {
     return this;
   }
   addTo() {
-    popups.push(this);
+    this.isOpen = true;
     return this;
   }
-  remove = vi.fn();
+  on(_event: "close", handler: () => void) {
+    this.closeHandlers.push(handler);
+  }
+  /** Like MapLibre: removing an open popup fires "close". */
+  remove() {
+    if (!this.isOpen) return;
+    this.isOpen = false;
+    this.closeHandlers.forEach((handler) => handler());
+  }
 }
 
 vi.mock("maplibre-gl", () => ({
@@ -239,5 +255,40 @@ describe("MapView", () => {
     map.fire(`click:${BUILDINGS_LAYER}`, event);
     expect(popups.at(-1)!.content).toHaveTextContent("Floors5 (known)");
     expect(popups.at(-1)!.content).toHaveTextContent("AddressMain street 1");
+  });
+
+  it("shows no tooltip over an open details popup", () => {
+    const buildings = buildingsColouredBy("a");
+    render(<MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={buildings} />);
+    const map = loadedMap();
+    const tooltip = popups.at(-1)!;
+    const event = { lngLat: [0.5, 0], features: [buildings.features[0]] };
+
+    map.fire(`click:${BUILDINGS_LAYER}`, event);
+    const details = popups.at(-1)!;
+    map.fire(`mousemove:${BUILDINGS_LAYER}`, event);
+    expect(details.isOpen).toBe(true);
+    expect(tooltip.isOpen).toBe(false);
+
+    details.remove(); // the user closes it
+    map.fire(`mousemove:${BUILDINGS_LAYER}`, event);
+    expect(tooltip.isOpen).toBe(true);
+  });
+
+  it("closes the popups when the buildings change", () => {
+    const buildings = buildingsColouredBy("a");
+    const { rerender } = render(
+      <MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={buildings} />,
+    );
+    const map = loadedMap();
+    map.fire(`click:${BUILDINGS_LAYER}`, {
+      lngLat: [0.5, 0],
+      features: [buildings.features[0]],
+    });
+    const details = popups.at(-1)!;
+    expect(details.isOpen).toBe(true);
+
+    rerender(<MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={null} />);
+    expect(details.isOpen).toBe(false);
   });
 });

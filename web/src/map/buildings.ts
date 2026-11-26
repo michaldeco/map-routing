@@ -11,7 +11,9 @@ export const BUILDINGS_SOURCE = "buildings";
 export const BUILDINGS_LAYER = "buildings-points";
 
 /** Distinct colours for unordered categories: the colour-blind friendly "Tableau 10"
- * palette. The API groups rare values into "other", so ten are enough. */
+ * palette, with its last colour (a light grey, #bab0ac) replaced by olive (from
+ * matplotlib's "tab10"): grey is reserved for "other". The API keeps ten categories
+ * and groups the rest into "other", so ten colours are enough. */
 export const PALETTE = [
   "#4e79a7",
   "#f28e2b",
@@ -22,7 +24,7 @@ export const PALETTE = [
   "#b07aa1",
   "#ff9da7",
   "#9c755f",
-  "#bab0ac",
+  "#bcbd22",
 ];
 /** "other" (grouped rare values): a neutral grey, so it does not look like a category. */
 export const OTHER_COLOUR = "#7f7f7f";

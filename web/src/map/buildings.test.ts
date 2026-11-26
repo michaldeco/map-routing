@@ -24,6 +24,16 @@ describe("categoryColours", () => {
     });
   });
 
+  it("never gives a category a grey, which would look like 'other'", () => {
+    // Grey: red, green and blue nearly equal.
+    const isGrey = (hex: string) => {
+      const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as number[];
+      return Math.max(r!, g!, b!) - Math.min(r!, g!, b!) < 24;
+    };
+    expect(isGrey(OTHER_COLOUR)).toBe(true);
+    expect(PALETTE.filter(isGrey)).toEqual([]);
+  });
+
   it("gives floor bands their fixed light-to-dark colours", () => {
     expect(categoryColours("floors", items("10+ floors", "1–2 floors", "unknown"))).toEqual({
       "10+ floors": FLOOR_COLOURS["10+ floors"],

@@ -48,6 +48,8 @@ export function MapView({ boundary, bounds, buildings }: Props) {
   // Legend explanations by category, for the hover text. A ref, not state: the mouse
   // handlers are registered once and read the current value when they run.
   const explanations = useRef<Record<string, string>>({});
+  // Closes the hover tooltip and the details popup; set once the map exists.
+  const closePopups = useRef(() => {});
   const [ready, setReady] = useState(false); // style loaded, sources exist
   const [drawn, setDrawn] = useState<Boundary | null>(null); // boundary fully rendered
   const [drawnBuildings, setDrawnBuildings] = useState<BuildingCollection | null>(null);
@@ -73,10 +75,18 @@ export function MapView({ boundary, bounds, buildings }: Props) {
     });
 
     // Hover: a small tooltip that follows the mouse. Click: a popup with details.
+    // Popups are MapLibre objects, not React elements, so this code opens and closes
+    // them itself.
     const tooltip = new Popup({ closeButton: false, closeOnClick: false, offset: 8 });
+    let details: Popup | null = null; // the open details popup, if any
     map.on("mousemove", BUILDINGS_LAYER, (e: MapLayerMouseEvent) => {
-      const category = String(e.features?.[0]?.properties.category ?? "");
       map.getCanvas().style.cursor = "pointer";
+
+      // while a details popup is open, show no tooltip (it would cover
+      // the details). `details` is `null` when no details popup is open.
+      if (details !== null) return;
+
+      const category = String(e.features?.[0]?.properties.category ?? "");
       tooltip
         .setLngLat(e.lngLat)
         .setText(buildingSummary(category, explanations.current[category]))
@@ -90,11 +100,20 @@ export function MapView({ boundary, bounds, buildings }: Props) {
       const feature = e.features?.[0];
       if (!feature) return;
       tooltip.remove();
-      new Popup({ maxWidth: "320px" })
+      details?.remove(); // one details popup at a time
+      details = new Popup({ maxWidth: "320px" })
         .setLngLat(e.lngLat)
         .setDOMContent(buildingDetails(feature.properties as Partial<BuildingProperties>))
         .addTo(map);
+      // "close": the user closed it, or `remove()` was called.
+      details.on("close", () => {
+        details = null;
+      });
     });
+    closePopups.current = () => {
+      tooltip.remove();
+      details?.remove();
+    };
 
     mapRef.current = map;
     return () => {
@@ -134,6 +153,7 @@ export function MapView({ boundary, bounds, buildings }: Props) {
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map) return;
+    closePopups.current(); // they may describe a building that is no longer shown
     const colours = buildings ? categoryColours(buildings.colour_by, buildings.legend.items) : {};
     explanations.current = Object.fromEntries(
       (buildings?.legend.items ?? []).map((item) => [item.value, item.description]),

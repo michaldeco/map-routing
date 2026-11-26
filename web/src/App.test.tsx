@@ -90,11 +90,13 @@ const THESS_BY_FLOORS = apiPaths.buildings("thessaloniki", {
   colourBy: "floors",
 });
 
-/** A fake API: URL -> [status, body]. */
-function serve(routes: Record<string, [number, unknown]>) {
+type Reply = [number, unknown];
+
+/** A fake API: URL -> [status, body], or a promise of it for a slow response. */
+function serve(routes: Record<string, Reply | Promise<Reply>>) {
   const fetch = vi.fn(async (url: string) => {
     const route = routes[url];
-    const [status, body] = route ?? [404, { detail: `no route ${url}` }];
+    const [status, body] = (await route) ?? [404, { detail: `no route ${url}` }];
     return new Response(JSON.stringify(body), { status });
   });
   vi.stubGlobal("fetch", fetch);
@@ -150,6 +152,43 @@ describe("App", () => {
     await userEvent.selectOptions(screen.getByLabelText("Colour by"), "floors");
     await waitFor(() => expect(buildingsOnMap()).toBe("3"));
     expect(screen.getByRole("region", { name: "Legend" })).toHaveTextContent("by floors (3)");
+  });
+
+  it("keeps showing the current buildings while other ones load", async () => {
+    let reply!: (r: Reply) => void;
+    serve({
+      "/api/areas": [200, [THESS]],
+      "/api/areas/thessaloniki": [200, detail(THESS, 22)],
+      [THESS_BUILDINGS]: [200, buildings(5, "reason")],
+      [THESS_BY_FLOORS]: new Promise<Reply>((resolve) => (reply = resolve)),
+    });
+    render(<App />);
+    await waitFor(() => expect(buildingsOnMap()).toBe("5"));
+
+    await userEvent.selectOptions(screen.getByLabelText("Colour by"), "floors");
+    expect(await screen.findByText("Loading buildings…")).toBeInTheDocument();
+    expect(buildingsOnMap()).toBe("5");
+    expect(screen.getByRole("region", { name: "Legend" })).toHaveTextContent("by reason");
+
+    reply([200, buildings(3, "floors")]);
+    await waitFor(() => expect(buildingsOnMap()).toBe("3"));
+  });
+
+  it("never shows one area's buildings on another area", async () => {
+    const OTHER = summary("otherville", "Otherville");
+    serve({
+      "/api/areas": [200, [THESS, OTHER]],
+      "/api/areas/thessaloniki": [200, detail(THESS, 22)],
+      "/api/areas/otherville": [200, detail(OTHER, 17)],
+      [THESS_BUILDINGS]: [200, buildings(5, "reason")],
+      [apiPaths.buildings("otherville", DEFAULT_BUILDING_OPTIONS)]: new Promise<Reply>(() => {}),
+    });
+    render(<App />);
+    await waitFor(() => expect(buildingsOnMap()).toBe("5"));
+    await userEvent.selectOptions(screen.getByLabelText("Area"), "otherville");
+    await waitFor(() => expect(boundaryOnMap()).toContain("[17,0]"));
+    expect(buildingsOnMap()).toBe("");
+    expect(screen.queryByRole("region", { name: "Legend" })).toBeNull();
   });
 
   it("offers no buildings view for an area without imputed buildings", async () => {
