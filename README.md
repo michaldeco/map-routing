@@ -48,8 +48,10 @@ endpoint can be tried at http://127.0.0.1:8000/docs. See
 
 `make dev` runs the API and the web app (`web/`: React, TypeScript, Vite,
 MapLibre GL JS on OpenFreeMap tiles) with live reload: open
-http://127.0.0.1:5173. So far it shows an area's boundary; buildings and
-scenarios follow. The web app's TypeScript types are generated from the API
+http://127.0.0.1:5173. It shows an area and its imputed buildings, coloured by
+why they count as residential, their floors or where the floors come from, with
+a legend that explains each colour; hover or click a building for details.
+Scenarios follow. The web app's TypeScript types are generated from the API
 (`make api-types` after changing API models; `make validate` fails if they are
 out of date).
 

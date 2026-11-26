@@ -92,7 +92,7 @@ Each PR stands alone: reviewable, working and tested. PR 2 was split in three
   `/docs` lets every endpoint be tried in the browser.
 - Tests with FastAPI's test client on small generated data.
 
-### PR 2: web setup and area map (branch `ui-web-setup`)
+### PR 2: web setup and area map (branch `ui-web-setup`, merged)
 
 - `web/`: Vite + React + TypeScript, MapLibre GL JS, OpenFreeMap style.
   Node.js 24 and pnpm; exact versions, committed lockfile, packages younger
@@ -109,12 +109,15 @@ Each PR stands alone: reviewable, working and tested. PR 2 was split in three
 
 ### PR 3: buildings view (branch `ui-web-buildings`)
 
-- Control panel: view, colour by, sample size, new sample, residential only.
-- Buildings as coloured points, legend with explanations, popups.
+- Control panel: colour by, sample size, new sample, residential only.
+- Buildings as coloured points (colours chosen in the frontend), legend with
+  the API's explanations, hover text and a details popup on click.
+- Browser test: buildings are drawn, follow the colouring, popup on click.
 
 ### PR 4: scenario view and one command (branch `ui-web-scenarios`)
 
-- Scenario selector, locations, dense-area centres and spread circles.
+- View switch (buildings / scenario), scenario selector, locations,
+  dense-area centres and spread circles.
 - `map-routing ui`: FastAPI serves the API and the built frontend, opens the
   browser; logging configured for the `api` and `ui` commands.
 

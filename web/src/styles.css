@@ -44,9 +44,74 @@ body,
 }
 
 .field span,
-.facts dt {
+.facts dt,
+.muted {
   color: var(--muted);
   font-size: 0.85rem;
+}
+
+.panel h2 {
+  font-size: 1rem;
+  margin: 20px 0 12px;
+}
+
+/* A select with a button beside it. */
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.field-row button {
+  margin-bottom: 12px;
+}
+
+.checkbox {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.legend h2 {
+  font-size: 0.95rem;
+}
+
+.legend ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+}
+
+.legend li {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+/* The colour of a legend row: a dot like the ones on the map. */
+.swatch {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.building-details {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 8px;
+  margin: 0;
+}
+
+.building-details dt {
+  color: var(--muted);
+}
+
+.building-details dd {
+  margin: 0;
 }
 
 .facts dd {
@@ -69,7 +134,9 @@ body,
     grid-template-rows: auto 1fr;
   }
 
+  /* At most about half the screen, so the map stays usable; the panel scrolls. */
   .panel {
+    max-height: 45vh;
     border-right: none;
     border-bottom: 1px solid var(--border);
   }
