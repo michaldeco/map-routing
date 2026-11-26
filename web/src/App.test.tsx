@@ -3,22 +3,38 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "./App";
-import type { AreaDetail, AreaSummary } from "./api/client";
+import {
+  apiPaths,
+  type AreaDetail,
+  type AreaSummary,
+  type BuildingCollection,
+  DEFAULT_BUILDING_OPTIONS,
+} from "./api/client";
 
 // MapLibre needs WebGL, which jsdom lacks; the map has its own test.
 vi.mock("./components/MapView", () => ({
-  MapView: ({ boundary }: { boundary: AreaDetail["boundary"] | null }) => (
-    <div data-testid="map" data-boundary={boundary ? JSON.stringify(boundary) : ""} />
+  MapView: ({
+    boundary,
+    buildings,
+  }: {
+    boundary: AreaDetail["boundary"] | null;
+    buildings: BuildingCollection | null;
+  }) => (
+    <div
+      data-testid="map"
+      data-boundary={boundary ? JSON.stringify(boundary) : ""}
+      data-buildings={buildings ? buildings.features.length : ""}
+    />
   ),
 }));
 
-function summary(slug: string, name: string): AreaSummary {
+function summary(slug: string, name: string, hasBuildings = true): AreaSummary {
   return {
     slug,
     name,
     data_date: "2026-11-21T20:21:02Z",
     bounds: { west: 0, south: 0, east: 1, north: 1 },
-    has_buildings: true,
+    has_buildings: hasBuildings,
   };
 }
 
@@ -32,14 +48,55 @@ function detail(area: AreaSummary, x: number): AreaDetail {
   return { ...area, boundary: { type: "Polygon", coordinates: [ring] } };
 }
 
-const THESS = summary("thessaloniki", "Thessaloniki");
-const PETR = summary("petrzalka", "Petržalka");
+/** `n` buildings, all in one legend category named after the colouring. */
+function buildings(n: number, colourBy: BuildingCollection["colour_by"]): BuildingCollection {
+  return {
+    type: "FeatureCollection",
+    features: Array.from({ length: n }, (_, i) => ({
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [22.5, 0.5] },
+      properties: {
+        osm_id: `w${i}`,
+        building: null,
+        residential: true,
+        reason: null,
+        floors: null,
+        floors_source: null,
+        footprint_m2: null,
+        address: null,
+        category: `by ${colourBy}`,
+      },
+    })),
+    colour_by: colourBy,
+    total: 10,
+    shown: n,
+    sampled: n < 10,
+    seed: 0,
+    legend: {
+      title: `Thessaloniki: ${n} of 10 buildings`,
+      subtitle: "",
+      items: [{ value: `by ${colourBy}`, count: n, description: "" }],
+      footer: "",
+      note: "",
+    },
+  };
+}
 
-/** A fake API: URL -> [status, body]. */
-function serve(routes: Record<string, [number, unknown]>) {
+const THESS = summary("thessaloniki", "Thessaloniki");
+const PETR = summary("petrzalka", "Petržalka", false);
+const THESS_BUILDINGS = apiPaths.buildings("thessaloniki", DEFAULT_BUILDING_OPTIONS);
+const THESS_BY_FLOORS = apiPaths.buildings("thessaloniki", {
+  ...DEFAULT_BUILDING_OPTIONS,
+  colourBy: "floors",
+});
+
+type Reply = [number, unknown];
+
+/** A fake API: URL -> [status, body], or a promise of it for a slow response. */
+function serve(routes: Record<string, Reply | Promise<Reply>>) {
   const fetch = vi.fn(async (url: string) => {
     const route = routes[url];
-    const [status, body] = route ?? [404, { detail: `no route ${url}` }];
+    const [status, body] = (await route) ?? [404, { detail: `no route ${url}` }];
     return new Response(JSON.stringify(body), { status });
   });
   vi.stubGlobal("fetch", fetch);
@@ -50,12 +107,20 @@ function boundaryOnMap() {
   return screen.getByTestId("map").getAttribute("data-boundary");
 }
 
+function buildingsOnMap() {
+  return screen.getByTestId("map").getAttribute("data-buildings");
+}
+
+let fetch: ReturnType<typeof serve>;
+
 describe("App", () => {
   beforeEach(() => {
-    serve({
+    fetch = serve({
       "/api/areas": [200, [THESS, PETR]],
       "/api/areas/thessaloniki": [200, detail(THESS, 22)],
       "/api/areas/petrzalka": [200, detail(PETR, 17)],
+      [THESS_BUILDINGS]: [200, buildings(5, "reason")],
+      [THESS_BY_FLOORS]: [200, buildings(3, "floors")],
     });
   });
 
@@ -77,6 +142,66 @@ describe("App", () => {
     await waitFor(() => expect(boundaryOnMap()).toContain("[17,0]"));
   });
 
+  it("shows the buildings with their legend, and reloads them when an option changes", async () => {
+    render(<App />);
+    const legend = await screen.findByRole("region", { name: "Legend" });
+    expect(legend).toHaveTextContent("Thessaloniki: 5 of 10 buildings");
+    expect(legend).toHaveTextContent("by reason (5)");
+    expect(buildingsOnMap()).toBe("5");
+
+    await userEvent.selectOptions(screen.getByLabelText("Colour by"), "floors");
+    await waitFor(() => expect(buildingsOnMap()).toBe("3"));
+    expect(screen.getByRole("region", { name: "Legend" })).toHaveTextContent("by floors (3)");
+  });
+
+  it("keeps showing the current buildings while other ones load", async () => {
+    let reply!: (r: Reply) => void;
+    serve({
+      "/api/areas": [200, [THESS]],
+      "/api/areas/thessaloniki": [200, detail(THESS, 22)],
+      [THESS_BUILDINGS]: [200, buildings(5, "reason")],
+      [THESS_BY_FLOORS]: new Promise<Reply>((resolve) => (reply = resolve)),
+    });
+    render(<App />);
+    await waitFor(() => expect(buildingsOnMap()).toBe("5"));
+
+    await userEvent.selectOptions(screen.getByLabelText("Colour by"), "floors");
+    expect(await screen.findByText("Loading buildings…")).toBeInTheDocument();
+    expect(buildingsOnMap()).toBe("5");
+    expect(screen.getByRole("region", { name: "Legend" })).toHaveTextContent("by reason");
+
+    reply([200, buildings(3, "floors")]);
+    await waitFor(() => expect(buildingsOnMap()).toBe("3"));
+  });
+
+  it("never shows one area's buildings on another area", async () => {
+    const OTHER = summary("otherville", "Otherville");
+    serve({
+      "/api/areas": [200, [THESS, OTHER]],
+      "/api/areas/thessaloniki": [200, detail(THESS, 22)],
+      "/api/areas/otherville": [200, detail(OTHER, 17)],
+      [THESS_BUILDINGS]: [200, buildings(5, "reason")],
+      [apiPaths.buildings("otherville", DEFAULT_BUILDING_OPTIONS)]: new Promise<Reply>(() => {}),
+    });
+    render(<App />);
+    await waitFor(() => expect(buildingsOnMap()).toBe("5"));
+    await userEvent.selectOptions(screen.getByLabelText("Area"), "otherville");
+    await waitFor(() => expect(boundaryOnMap()).toContain("[17,0]"));
+    expect(buildingsOnMap()).toBe("");
+    expect(screen.queryByRole("region", { name: "Legend" })).toBeNull();
+  });
+
+  it("offers no buildings view for an area without imputed buildings", async () => {
+    render(<App />);
+    await screen.findByRole("region", { name: "Legend" });
+    await userEvent.selectOptions(screen.getByLabelText("Area"), "petrzalka");
+    await waitFor(() => expect(boundaryOnMap()).toContain("[17,0]"));
+    expect(screen.queryByLabelText("Colour by")).toBeNull();
+    expect(buildingsOnMap()).toBe("");
+    const requested = fetch.mock.calls.map(([url]) => url);
+    expect(requested.filter((url) => url.startsWith("/api/areas/petrzalka/"))).toEqual([]);
+  });
+
   it("explains how to create an area when there is none", async () => {
     serve({ "/api/areas": [200, []] });
     render(<App />);
@@ -87,10 +212,23 @@ describe("App", () => {
     serve({
       "/api/areas": [200, [THESS]],
       "/api/areas/thessaloniki": [500, { detail: "area 'thessaloniki' cannot be read" }],
+      [THESS_BUILDINGS]: [200, buildings(5, "reason")],
     });
     render(<App />);
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Cannot load the area: area 'thessaloniki' cannot be read",
+    );
+  });
+
+  it("shows the API's error message for buildings", async () => {
+    serve({
+      "/api/areas": [200, [THESS]],
+      "/api/areas/thessaloniki": [200, detail(THESS, 22)],
+      [THESS_BUILDINGS]: [500, { detail: "buildings of 'thessaloniki' cannot be read" }],
+    });
+    render(<App />);
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Cannot load buildings: buildings of 'thessaloniki' cannot be read",
     );
   });
 });
