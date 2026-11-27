@@ -23,7 +23,7 @@ import type {
 import {
   addBuildingLayers,
   buildingDetails,
-  buildingSummary,
+  legendSummary,
   BUILDINGS_LAYER,
   BUILDINGS_SOURCE,
   categoryColours,
@@ -49,7 +49,12 @@ const FIT_PADDING_PX = 40;
 const EMPTY = { type: "FeatureCollection", features: [] } as const;
 
 /** Layers of dots with a hover tooltip (the dot's colour and what it means) and a
- * details popup on click. `property` holds the dot's legend value. */
+ * details popup on click. `property` holds the dot's legend value.
+ *
+ * The layers share one tooltip and one details popup, which is enough because the
+ * app shows one layer at a time (buildings or a scenario). Showing both at once
+ * would need hover and click to pick the topmost dot under the mouse, and a data
+ * change to close only its own layer's popup. */
 const POINT_LAYERS = [
   {
     id: BUILDINGS_LAYER,
@@ -124,7 +129,7 @@ export function MapView({ boundary, bounds, buildings, scenario }: Props) {
         const value = String(e.features?.[0]?.properties[layer.property] ?? "");
         tooltip
           .setLngLat(e.lngLat)
-          .setText(buildingSummary(value, explanations.current[layer.id]?.[value]))
+          .setText(legendSummary(value, explanations.current[layer.id]?.[value]))
           .addTo(map);
       });
       map.on("mouseleave", layer.id, () => {

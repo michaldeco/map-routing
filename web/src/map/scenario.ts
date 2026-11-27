@@ -15,6 +15,9 @@ export const SCENARIO_LAYER = "scenario-locations";
 const RADIUS_BY_VISITS = [1, 3, 7, 8] as const;
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+/** Hue step in degrees for colours beyond the palette: each step lands the new hue
+ * far from all the earlier ones. */
+const GOLDEN_ANGLE = 137.5;
 
 /** Colour of each legend group: palette colours in legend order (area1, area2, ...),
  * and grey for outliers, which belong to no dense area. */
@@ -22,9 +25,16 @@ export function groupColours(items: LegendItem[]): Record<string, string> {
   const colours: Record<string, string> = {};
   let next = 0;
   for (const { value } of items) {
-    colours[value] = value === "outlier" ? OTHER_COLOUR : PALETTE[next++ % PALETTE.length]!;
+    colours[value] = value === "outlier" ? OTHER_COLOUR : groupColour(next++);
   }
   return colours;
+}
+
+/** The colour of the i-th dense area (counting from 0): the palette's hand-picked
+ * colours first; beyond them (a rare case), computed hues, so that no two dense areas
+ * share a colour. */
+function groupColour(i: number): string {
+  return PALETTE[i] ?? `hsl(${(GOLDEN_ANGLE * i) % 360}, 65%, 45%)`;
 }
 
 /** Locations: dots like the buildings', sized by visits per week. */

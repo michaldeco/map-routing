@@ -88,9 +88,10 @@ export function addBuildingLayers(map: MapLibreMap): void {
   });
 }
 
-/** Hover text: the building's category and what it means. */
-export function buildingSummary(category: string, explanation: string | undefined): string {
-  return explanation ? `${category}: ${explanation}` : category;
+/** Hover text of a dot (a building or a scenario location): its legend value and
+ * what it means. */
+export function legendSummary(value: string, explanation: string | undefined): string {
+  return explanation ? `${value}: ${explanation}` : value;
 }
 
 /**

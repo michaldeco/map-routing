@@ -16,6 +16,17 @@ describe("groupColours", () => {
       outlier: OTHER_COLOUR,
     });
   });
+
+  it("gives every dense area its own colour, also beyond the palette's ten", () => {
+    const items = Array.from({ length: 13 }, (_, i) => ({
+      value: `area${i + 1}`,
+      count: 1,
+      description: "",
+    }));
+    const colours = Object.values(groupColours(items));
+    expect(colours.slice(0, PALETTE.length)).toEqual(PALETTE); // the palette first
+    expect(new Set(colours).size).toBe(13); // no colour twice
+  });
 });
 
 describe("location popup", () => {
