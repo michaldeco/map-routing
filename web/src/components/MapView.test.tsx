@@ -2,8 +2,9 @@ import { act, render } from "@testing-library/react";
 import { setWorkerUrl } from "maplibre-gl";
 import { describe, expect, it, vi } from "vitest";
 
-import type { Boundary, BuildingCollection } from "../api/client";
-import { BUILDINGS_LAYER, BUILDINGS_SOURCE, PALETTE } from "../map/buildings";
+import type { Boundary, BuildingCollection, ScenarioDetail } from "../api/client";
+import { BUILDINGS_LAYER, BUILDINGS_SOURCE, OTHER_COLOUR, PALETTE } from "../map/buildings";
+import { SCENARIO_LAYER, SCENARIO_SOURCE } from "../map/scenario";
 import { BOUNDARY_SOURCE } from "../map/style";
 import { MapView } from "./MapView";
 
@@ -166,6 +167,49 @@ function buildingsColouredBy(...categories: string[]): BuildingCollection {
   };
 }
 
+/** Two locations in area1 and an outlier. */
+function scenarioOf(...groups: string[]): ScenarioDetail {
+  return {
+    type: "FeatureCollection",
+    summary: {
+      name: "testville-small-s1",
+      area_slug: "testville",
+      source: "synthetic",
+      created: "2026-11-26T11:01:40Z",
+      seed: 1,
+      size: "small",
+      layout: "mixed",
+      load: "moderate",
+      locations: groups.length,
+      visits_per_week: 2 * groups.length,
+    },
+    features: groups.map((group, i) => ({
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [0.5, i / 10] },
+      properties: {
+        id: `b${i}`,
+        group,
+        osm_id: `w${i}`,
+        address: null,
+        floors: 3,
+        floors_source: "neighbours_300m",
+        footprint_m2: 200,
+        visits_per_week: 2,
+        duration_min: 24,
+        allowed_days: ["Mon", "Tue", "Wed", "Thu", "Fri"],
+      },
+    })),
+    dense_areas: [],
+    legend: {
+      title: "testville-small-s1",
+      subtitle: "",
+      items: [...new Set(groups)].map((value) => ({ value, count: 1, description: `${value}!` })),
+      footer: "",
+      note: "",
+    },
+  };
+}
+
 function loadedMap() {
   const map = maps.at(-1)!;
   map.fire("load");
@@ -183,7 +227,7 @@ describe("MapView", () => {
 
   it("draws the boundary and zooms to the area once the map has loaded", () => {
     const { getByTestId } = render(
-      <MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={null} />,
+      <MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={null} scenario={null} />,
     );
     const map = loadedMap();
     expect(getByTestId("map")).toHaveAttribute("data-ready", "false");
@@ -205,11 +249,11 @@ describe("MapView", () => {
 
   it("updates the same map when the area changes, and removes it on unmount", () => {
     const { rerender, unmount } = render(
-      <MapView boundary={null} bounds={null} buildings={null} />,
+      <MapView boundary={null} bounds={null} buildings={null} scenario={null} />,
     );
     const map = loadedMap();
     const created = maps.length;
-    rerender(<MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={null} />);
+    rerender(<MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={null} scenario={null} />);
     expect(maps.length).toBe(created); // not re-created
     expect(map.sources[BOUNDARY_SOURCE]!.setData).toHaveBeenLastCalledWith(
       expect.objectContaining({ geometry: BOUNDARY }),
@@ -220,12 +264,12 @@ describe("MapView", () => {
 
   it("draws the buildings in their legend colours, without moving the map", () => {
     const { getByTestId, rerender } = render(
-      <MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={null} />,
+      <MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={null} scenario={null} />,
     );
     const map = loadedMap();
     map.fitBounds.mockClear();
     const buildings = buildingsColouredBy("a", "b", "a");
-    rerender(<MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={buildings} />);
+    rerender(<MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={buildings} scenario={null} />);
     expect(map.sources[BUILDINGS_SOURCE]!.setData).toHaveBeenLastCalledWith(buildings);
     expect(map.setPaintProperty).toHaveBeenLastCalledWith(BUILDINGS_LAYER, "circle-color", [
       "match",
@@ -244,7 +288,7 @@ describe("MapView", () => {
 
   it("explains a building on hover and shows its details on click", () => {
     const buildings = buildingsColouredBy("a");
-    render(<MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={buildings} />);
+    render(<MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={buildings} scenario={null} />);
     const map = loadedMap();
     const event = { lngLat: [0.5, 0], features: [buildings.features[0]] };
 
@@ -259,7 +303,7 @@ describe("MapView", () => {
 
   it("shows no tooltip over an open details popup", () => {
     const buildings = buildingsColouredBy("a");
-    render(<MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={buildings} />);
+    render(<MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={buildings} scenario={null} />);
     const map = loadedMap();
     const tooltip = popups.at(-1)!;
     const event = { lngLat: [0.5, 0], features: [buildings.features[0]] };
@@ -278,7 +322,7 @@ describe("MapView", () => {
   it("closes the popups when the buildings change", () => {
     const buildings = buildingsColouredBy("a");
     const { rerender } = render(
-      <MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={buildings} />,
+      <MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={buildings} scenario={null} />,
     );
     const map = loadedMap();
     map.fire(`click:${BUILDINGS_LAYER}`, {
@@ -288,7 +332,46 @@ describe("MapView", () => {
     const details = popups.at(-1)!;
     expect(details.isOpen).toBe(true);
 
-    rerender(<MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={null} />);
+    rerender(<MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={null} scenario={null} />);
     expect(details.isOpen).toBe(false);
+  });
+
+  it("draws a scenario's locations in their group colours, outliers grey", () => {
+    const { getByTestId, rerender } = render(
+      <MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={null} scenario={null} />,
+    );
+    const map = loadedMap();
+    const scenario = scenarioOf("area1", "area1", "outlier");
+    rerender(<MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={null} scenario={scenario} />);
+    expect(map.sources[SCENARIO_SOURCE]!.setData).toHaveBeenLastCalledWith(scenario);
+    expect(map.setPaintProperty).toHaveBeenLastCalledWith(SCENARIO_LAYER, "circle-color", [
+      "match",
+      ["get", "group"],
+      "area1",
+      PALETTE[0],
+      "outlier",
+      OTHER_COLOUR,
+      expect.any(String),
+    ]);
+    expect(getByTestId("map")).toHaveAttribute("data-locations", "");
+    map.fire("idle");
+    expect(getByTestId("map")).toHaveAttribute("data-locations", "3");
+  });
+
+  it("explains a location on hover and shows its visits on click", () => {
+    const scenario = scenarioOf("area1");
+    render(<MapView boundary={BOUNDARY} bounds={BOUNDS} buildings={null} scenario={scenario} />);
+    const map = loadedMap();
+    // MapLibre hands over list properties as JSON text.
+    const feature = scenario.features[0]!;
+    const properties = { ...feature.properties, allowed_days: '["Mon","Tue"]' };
+    const event = { lngLat: [0.5, 0], features: [{ ...feature, properties }] };
+
+    map.fire(`mousemove:${SCENARIO_LAYER}`, event);
+    expect(popups.at(-1)!.text).toBe("area1: area1!");
+
+    map.fire(`click:${SCENARIO_LAYER}`, event);
+    expect(popups.at(-1)!.content).toHaveTextContent("Visits per week2Visit length24 min");
+    expect(popups.at(-1)!.content).toHaveTextContent("Allowed daysMon, Tue");
   });
 });

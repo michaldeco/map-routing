@@ -54,21 +54,18 @@ export function categoryColours(colourBy: ColourBy, items: LegendItem[]): Record
   return colours;
 }
 
-/** A MapLibre expression that picks a point's colour from its `category` property,
- * i.e. `match(category, value1, colour1, value2, colour2, ..., fallback)`. */
+/** A MapLibre expression that picks a point's colour from one of its properties
+ * (buildings: `category`, scenario locations: `group`), i.e.
+ * `match(category, value1, colour1, value2, colour2, ..., fallback)`. */
 export function colourExpression(
   colours: Record<string, string>,
+  property = "category",
 ): ExpressionSpecification | string {
   const pairs = Object.entries(colours).flat();
   if (pairs.length === 0) return OTHER_COLOUR; // `match` needs at least one pair
   // MapLibre's type lists the pairs one by one; a pair list of unknown length cannot
   // be checked against it, hence the cast (the pairs check above keeps it valid).
-  return [
-    "match",
-    ["get", "category"],
-    ...pairs,
-    OTHER_COLOUR,
-  ] as unknown as ExpressionSpecification;
+  return ["match", ["get", property], ...pairs, OTHER_COLOUR] as unknown as ExpressionSpecification;
 }
 
 /** Buildings: small dots with a thin white outline, so overlapping dots stay apart. */
@@ -91,9 +88,10 @@ export function addBuildingLayers(map: MapLibreMap): void {
   });
 }
 
-/** Hover text: the building's category and what it means. */
-export function buildingSummary(category: string, explanation: string | undefined): string {
-  return explanation ? `${category}: ${explanation}` : category;
+/** Hover text of a dot (a building or a scenario location): its legend value and
+ * what it means. */
+export function legendSummary(value: string, explanation: string | undefined): string {
+  return explanation ? `${value}: ${explanation}` : value;
 }
 
 /**
@@ -114,8 +112,14 @@ export function buildingDetails(p: Partial<BuildingProperties>): HTMLElement {
     ["Ground area", p.footprint_m2 == null ? null : `${Math.round(p.footprint_m2)} m²`],
     ["Address", p.address],
   ];
+  return detailsList(rows);
+}
+
+/** A popup's rows as a `<dl>` list of label and value; rows without a value are left
+ * out. Shared by the building and scenario location popups. */
+export function detailsList(rows: [string, string | Node | null | undefined][]): HTMLElement {
   const list = document.createElement("dl");
-  list.className = "building-details";
+  list.className = "details";
   for (const [label, value] of rows) {
     if (value == null || value === "") continue;
     const term = document.createElement("dt");
@@ -129,7 +133,7 @@ export function buildingDetails(p: Partial<BuildingProperties>): HTMLElement {
 
 /** "5 (known)" for floors tagged in OpenStreetMap, "5 (estimated)" for imputed ones;
  * the "Source of floors" colouring explains each estimate. */
-function floorsText(floors: number | null | undefined, source: string | null | undefined) {
+export function floorsText(floors: number | null | undefined, source: string | null | undefined) {
   if (floors == null) return null;
   return `${floors} (${source === "osm" ? "known" : "estimated"})`;
 }
@@ -137,7 +141,7 @@ function floorsText(floors: number | null | undefined, source: string | null | u
 /** OSM ids are "w123" (way), "r456" (relation) or "n789" (node). */
 const OSM_TYPES: Record<string, string> = { n: "node", w: "way", r: "relation" };
 
-function osmLink(osmId: string): Node {
+export function osmLink(osmId: string): Node {
   const type = OSM_TYPES[osmId[0] ?? ""];
   if (!type) return document.createTextNode(osmId);
   const link = document.createElement("a");

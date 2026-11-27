@@ -83,6 +83,7 @@ export function App() {
           boundary={area.data?.boundary ?? null}
           bounds={area.data?.bounds ?? null}
           buildings={shown}
+          scenario={null} // the scenario view comes next
         />
       </main>
     </div>

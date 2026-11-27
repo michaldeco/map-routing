@@ -99,18 +99,18 @@ body,
   border-radius: 50%;
 }
 
-.building-details {
+.details {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 2px 8px;
   margin: 0;
 }
 
-.building-details dt {
+.details dt {
   color: var(--muted);
 }
 
-.building-details dd {
+.details dd {
   margin: 0;
 }
 

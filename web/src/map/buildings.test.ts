@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { LegendItem } from "../api/client";
 import {
   buildingDetails,
-  buildingSummary,
+  legendSummary,
   categoryColours,
   colourExpression,
   FLOOR_COLOURS,
@@ -61,10 +61,10 @@ describe("colourExpression", () => {
 
 describe("building tooltip and popup", () => {
   it("explains the category on hover when the legend has an explanation", () => {
-    expect(buildingSummary("osm", "known: tagged in OpenStreetMap")).toBe(
+    expect(legendSummary("osm", "known: tagged in OpenStreetMap")).toBe(
       "osm: known: tagged in OpenStreetMap",
     );
-    expect(buildingSummary("other", undefined)).toBe("other");
+    expect(legendSummary("other", undefined)).toBe("other");
   });
 
   it("lists the known facts and links to OpenStreetMap", () => {
