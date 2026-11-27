@@ -14,6 +14,9 @@ export type BuildingCollection = Schemas["BuildingCollection"];
 export type BuildingProperties = Schemas["BuildingProperties"];
 export type Legend = Schemas["Legend"];
 export type LegendItem = Schemas["LegendItem"];
+export type ScenarioSummary = Schemas["ScenarioSummary"];
+export type ScenarioDetail = Schemas["ScenarioDetail"];
+export type LocationProperties = Schemas["LocationProperties"];
 /** Which imputation result the building colours show. */
 export type ColourBy = BuildingCollection["colour_by"];
 
@@ -52,6 +55,8 @@ export const apiPaths = {
     else query.set("sample", String(options.sample));
     return `/api/areas/${encodeURIComponent(slug)}/buildings?${query}`;
   },
+  scenarios: (slug: string) => `/api/scenarios?area=${encodeURIComponent(slug)}`,
+  scenario: (name: string) => `/api/scenarios/${encodeURIComponent(name)}`,
 };
 
 export class ApiError extends Error {

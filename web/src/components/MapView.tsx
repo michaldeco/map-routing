@@ -11,7 +11,15 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import { useEffect, useRef, useState } from "react";
 
-import type { Boundary, Bounds, BuildingCollection, BuildingProperties } from "../api/client";
+import type {
+  Boundary,
+  Bounds,
+  BuildingCollection,
+  BuildingProperties,
+  LegendItem,
+  LocationProperties,
+  ScenarioDetail,
+} from "../api/client";
 import {
   addBuildingLayers,
   buildingDetails,
@@ -21,16 +29,39 @@ import {
   categoryColours,
   colourExpression,
 } from "../map/buildings";
+import {
+  addScenarioLayers,
+  groupColours,
+  locationDetails,
+  SCENARIO_LAYER,
+  SCENARIO_SOURCE,
+} from "../map/scenario";
 import { addBoundaryLayers, BASEMAP_STYLE, BOUNDARY_SOURCE } from "../map/style";
 
 interface Props {
   boundary: Boundary | null;
   bounds: Bounds | null;
   buildings: BuildingCollection | null;
+  scenario: ScenarioDetail | null;
 }
 
 const FIT_PADDING_PX = 40;
 const EMPTY = { type: "FeatureCollection", features: [] } as const;
+
+/** Layers of dots with a hover tooltip (the dot's colour and what it means) and a
+ * details popup on click. `property` holds the dot's legend value. */
+const POINT_LAYERS = [
+  {
+    id: BUILDINGS_LAYER,
+    property: "category",
+    details: (p: object) => buildingDetails(p as Partial<BuildingProperties>),
+  },
+  {
+    id: SCENARIO_LAYER,
+    property: "group",
+    details: (p: object) => locationDetails(p as Partial<LocationProperties>),
+  },
+];
 
 // MapLibre decodes tiles in a web worker loaded from a separate file, which it looks
 // for next to its own module. Vite bundles MapLibre elsewhere (in development under
@@ -42,17 +73,19 @@ setWorkerUrl(workerUrl);
  * The map. MapLibre is imperative, so React only creates it once and then pushes
  * data changes into its sources; the map itself is never re-created.
  */
-export function MapView({ boundary, bounds, buildings }: Props) {
+export function MapView({ boundary, bounds, buildings, scenario }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
-  // Legend explanations by category, for the hover text. A ref, not state: the mouse
-  // handlers are registered once and read the current value when they run.
-  const explanations = useRef<Record<string, string>>({});
+  // Legend explanations by layer and legend value, for the hover text. A ref, not
+  // state: the mouse handlers are registered once and read the current value when
+  // they run.
+  const explanations = useRef<Record<string, Record<string, string>>>({});
   // Closes the hover tooltip and the details popup; set once the map exists.
   const closePopups = useRef(() => {});
   const [ready, setReady] = useState(false); // style loaded, sources exist
   const [drawn, setDrawn] = useState<Boundary | null>(null); // boundary fully rendered
   const [drawnBuildings, setDrawnBuildings] = useState<BuildingCollection | null>(null);
+  const [drawnScenario, setDrawnScenario] = useState<ScenarioDetail | null>(null);
 
   // An effect is code React runs after it has updated the page; the list at its end
   // says when to run it again (here `[]`: never, only once after the first render).
@@ -70,7 +103,8 @@ export function MapView({ boundary, bounds, buildings }: Props) {
     map.addControl(new ScaleControl(), "bottom-left");
     map.on("load", () => {
       addBoundaryLayers(map);
-      addBuildingLayers(map); // added last, so drawn on top of the boundary
+      addBuildingLayers(map); // added after the boundary, so drawn on top of it
+      addScenarioLayers(map);
       setReady(true);
     });
 
@@ -79,37 +113,39 @@ export function MapView({ boundary, bounds, buildings }: Props) {
     // them itself.
     const tooltip = new Popup({ closeButton: false, closeOnClick: false, offset: 8 });
     let details: Popup | null = null; // the open details popup, if any
-    map.on("mousemove", BUILDINGS_LAYER, (e: MapLayerMouseEvent) => {
-      map.getCanvas().style.cursor = "pointer";
+    for (const layer of POINT_LAYERS) {
+      map.on("mousemove", layer.id, (e: MapLayerMouseEvent) => {
+        map.getCanvas().style.cursor = "pointer";
 
-      // while a details popup is open, show no tooltip (it would cover
-      // the details). `details` is `null` when no details popup is open.
-      if (details !== null) return;
+        // while a details popup is open, show no tooltip (it would cover
+        // the details). `details` is `null` when no details popup is open.
+        if (details !== null) return;
 
-      const category = String(e.features?.[0]?.properties.category ?? "");
-      tooltip
-        .setLngLat(e.lngLat)
-        .setText(buildingSummary(category, explanations.current[category]))
-        .addTo(map);
-    });
-    map.on("mouseleave", BUILDINGS_LAYER, () => {
-      map.getCanvas().style.cursor = "";
-      tooltip.remove();
-    });
-    map.on("click", BUILDINGS_LAYER, (e: MapLayerMouseEvent) => {
-      const feature = e.features?.[0];
-      if (!feature) return;
-      tooltip.remove();
-      details?.remove(); // one details popup at a time
-      details = new Popup({ maxWidth: "320px" })
-        .setLngLat(e.lngLat)
-        .setDOMContent(buildingDetails(feature.properties as Partial<BuildingProperties>))
-        .addTo(map);
-      // "close": the user closed it, or `remove()` was called.
-      details.on("close", () => {
-        details = null;
+        const value = String(e.features?.[0]?.properties[layer.property] ?? "");
+        tooltip
+          .setLngLat(e.lngLat)
+          .setText(buildingSummary(value, explanations.current[layer.id]?.[value]))
+          .addTo(map);
       });
-    });
+      map.on("mouseleave", layer.id, () => {
+        map.getCanvas().style.cursor = "";
+        tooltip.remove();
+      });
+      map.on("click", layer.id, (e: MapLayerMouseEvent) => {
+        const feature = e.features?.[0];
+        if (!feature) return;
+        tooltip.remove();
+        details?.remove(); // one details popup at a time
+        details = new Popup({ maxWidth: "320px" })
+          .setLngLat(e.lngLat)
+          .setDOMContent(layer.details(feature.properties))
+          .addTo(map);
+        // "close": the user closed it, or `remove()` was called.
+        details.on("close", () => {
+          details = null;
+        });
+      });
+    }
     closePopups.current = () => {
       tooltip.remove();
       details?.remove();
@@ -155,9 +191,7 @@ export function MapView({ boundary, bounds, buildings }: Props) {
     if (!ready || !map) return;
     closePopups.current(); // they may describe a building that is no longer shown
     const colours = buildings ? categoryColours(buildings.colour_by, buildings.legend.items) : {};
-    explanations.current = Object.fromEntries(
-      (buildings?.legend.items ?? []).map((item) => [item.value, item.description]),
-    );
+    explanations.current[BUILDINGS_LAYER] = legendExplanations(buildings);
     map.getSource<GeoJSONSource>(BUILDINGS_SOURCE)?.setData(buildings ?? EMPTY);
     map.setPaintProperty(BUILDINGS_LAYER, "circle-color", colourExpression(colours));
     const onIdle = () => setDrawnBuildings(buildings);
@@ -167,8 +201,25 @@ export function MapView({ boundary, bounds, buildings }: Props) {
     };
   }, [ready, buildings]);
 
-  // `data-ready`: the current area is drawn on the map; `data-buildings`: how many
-  // buildings are drawn (empty while they are loading). Both are used by browser tests.
+  // The same for a scenario's locations.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    closePopups.current();
+    const colours = scenario ? groupColours(scenario.legend.items) : {};
+    explanations.current[SCENARIO_LAYER] = legendExplanations(scenario);
+    map.getSource<GeoJSONSource>(SCENARIO_SOURCE)?.setData(scenario ?? EMPTY);
+    map.setPaintProperty(SCENARIO_LAYER, "circle-color", colourExpression(colours, "group"));
+    const onIdle = () => setDrawnScenario(scenario);
+    map.once("idle", onIdle);
+    return () => {
+      map.off("idle", onIdle);
+    };
+  }, [ready, scenario]);
+
+  // `data-ready`: the current area is drawn on the map; `data-buildings` and
+  // `data-locations`: how many buildings or scenario locations are drawn (empty while
+  // they are loading). All are used by browser tests.
   return (
     <div
       ref={container}
@@ -178,6 +229,14 @@ export function MapView({ boundary, bounds, buildings }: Props) {
       data-buildings={
         buildings !== null && drawnBuildings === buildings ? buildings.features.length : ""
       }
+      data-locations={
+        scenario !== null && drawnScenario === scenario ? scenario.features.length : ""
+      }
     />
   );
+}
+
+/** Each legend value's explanation, e.g. {"area1": "dense area 1: ..."}. */
+function legendExplanations(data: { legend: { items: LegendItem[] } } | null) {
+  return Object.fromEntries((data?.legend.items ?? []).map((i) => [i.value, i.description]));
 }

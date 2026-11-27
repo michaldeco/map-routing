@@ -114,10 +114,26 @@ Each PR stands alone: reviewable, working and tested. PR 2 was split in three
   the API's explanations, hover text and a details popup on click.
 - Browser test: buildings are drawn, follow the colouring, popup on click.
 
-### PR 4: scenario view and one command (branch `ui-web-scenarios`)
+PR 4 is split in four (at most about 500 changed lines each):
 
-- View switch (buildings / scenario), scenario selector, locations,
-  dense-area centres and spread circles.
+### PR 4a: scenario map layer (branch `ui-scenario-layer`)
+
+- Locations as dots on the map, coloured by dense area (outliers grey) and
+  sized by visits per week; hover text and a details popup, shared with the
+  buildings.
+
+### PR 4b: scenario view (branch `ui-web-scenarios`)
+
+- View switch (buildings / scenario), scenario selector with a short summary,
+  legend.
+- Browser test: the scenario view draws the locations, popup on click.
+
+### PR 4c: dense areas (branch `ui-scenario-dense-areas`)
+
+- Dense-area centres and spread circles.
+
+### PR 4d: one command (branch `ui-command`)
+
 - `map-routing ui`: FastAPI serves the API and the built frontend, opens the
   browser; logging configured for the `api` and `ui` commands.
 
